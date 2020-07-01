@@ -112,7 +112,7 @@ case ${vLong} in
      8)  # Fecha
          vDia=`echo $pFH | awk '{print substr($0,7,2)}'`
          #vMes=`echo $pFH | awk '{print substr($0,5,2)}'`
-         mes=`date +%B --date='$pFH'
+         mes=`date +%B --date='$pFH'`
          vAno=`echo $pFH | awk '{print substr($0,1,4)}'`
          
          vpValRet="${vDia}-${vMes}-${vAno}";;
@@ -160,8 +160,8 @@ f_menuCAB ()
 
    clear
    echo "*******************************************************************************"
-   echo "*                       SISTEMA DE GESTION DE COMERCIOS                  ${COD_AMBIENTE} *"
-   echo "*              Menu Principal del Proceso de Construción de Incoming                     *"
+   echo "*                       SISTEMA DE GESTION DE COMERCIOS       ${COD_AMBIENTE} *"
+   echo "*              Menu Principal del Proceso de Construción de Incoming          *"
    echo "*******************************************************************************"
 
 }
@@ -190,8 +190,8 @@ f_menuOPC ()
    echo
    echo "   PROCESOS                                 CONFIGURACION"
    echo "  -------------------------------------    ----------------------------------"
-   echo "   [ 1] Constiur Incoming de Ngta Visa       [ 6]  Fecha de Sesion"
-   echo "   [ 2] Constiur Incoming de Ngta MC         [ 7]  Fecha de Proceso"
+   echo "   [ 1] Constiur Incoming de Visa            [ 6]  Fecha de Sesion"
+   echo "   [ 2] Constiur Incoming de MC              [ 7]  Fecha de Proceso"
    echo "  "
    echo "-------------------------------------------------------------------------------"
    echo " Ver $dpVer | Telefonica Servicios Transaccionales                     [Q] Salir"
@@ -291,76 +291,76 @@ while ( test -z "$vOpcion" || true ) do
    if [ "$vOpcion" = "2" ]; then   # contrución Incoming de MasterCard  NAIGUATA
 
          
-         clear   #limpia la pantalla para visualizar mejor el menu ip1302 fjvg
-         f_menuCAB
-         vFlgOpcErr="N"
-         vOpcion=""
-         ############################################################
-         # INCOMING DE MASTERCARD
-
-            echo
-            echo " INCOMING DE NAIGUATA MASTERCARD | Seleccione el Adquirente:"
-            echo "------------------------------------------------------------"
-            echo "   [105] Banco Mercantil"
-            echo "   [108] Banco Provincial"
-            echo "   [Q] Cancelar"
-            echo
-            echo "   Seleccione Opcion => \c"
-            read vOpcADQ
-
-            if [ "$vOpcADQ" = "q" ] || [ "$vOpcADQ" = "Q" ]; then
-               vOpcion=""
-               vFlgOpcErr="N"
-            fi
-
-            if [ "$vOpcADQ" = "" ]; then
-               vOpcion="6"
-               vFlgOpcErr="N"
-            fi
-
-            if [ "$vOpcADQ" = "105" ]; then  # Incoming MC - MERCANTIL
-               vFlgOpcErr="N"
-               vOpcion=""
-               trap "trap '' 2" 2
-               SGCPINCMCADQmenu_ngta.sh BM ${vFecProc} ${vFecSes}
-               trap ""
-            fi # Incoming MC - MERCANTIL
-
-            if [ "$vOpcADQ" = "108" ]; then  # Incoming MC - PROVINCIAL
-               vFlgOpcErr="N"
-               vOpcion=""
-               trap "trap '' 2" 2
-               SGCPINCMCADQmenu_ngta.sh BP ${vFecProc} ${vFecSes}
-               trap ""
-            fi # Incoming MC - PROVINCIAL
-
-            if [ "$vFlgOpcErr" = "S" ]; then
-               vOpcion="6"
-               echo
-               f_msg "${dpNom} - Opcion Incorrecta."
-               echo
-               echo "... presione [ENTER] para continuar."
-               read vContinua
-            fi
-
-            vFlgOpcErr="N"
-
-         ############################################################
-
-      fi # Incoming de MasterCard  NAIGUATA
-
-     
-      if [ "$vFlgOpcErr" = "S" ]; then
-         vOpcion="6"
-         echo
-         f_msg "${dpNom} - Opcion Incorrecta."
-         echo
-         echo "... presione [ENTER] para continuar."
-         read vContinua
-      fi
-
+      clear   #limpia la pantalla para visualizar mejor el menu ip1302 fjvg
+      f_menuCAB
       vFlgOpcErr="N"
-   fi # Opcion 2 - Construccón de Incoming de Master Card
+      vOpcion=""
+      ############################################################
+      # INCOMING DE MASTERCARD
+
+         echo
+         echo " INCOMING DE NAIGUATA MASTERCARD | Seleccione el Adquirente:"
+         echo "------------------------------------------------------------"
+         echo "   [105] Banco Mercantil"
+         echo "   [108] Banco Provincial"
+         echo "   [Q] Cancelar"
+         echo
+         echo "   Seleccione Opcion => \c"
+         read vOpcADQ
+
+         if [ "$vOpcADQ" = "q" ] || [ "$vOpcADQ" = "Q" ]; then
+            vOpcion=""
+            vFlgOpcErr="N"
+         fi
+
+         if [ "$vOpcADQ" = "" ]; then
+            vOpcion="6"
+            vFlgOpcErr="N"
+         fi
+
+         if [ "$vOpcADQ" = "105" ]; then  # BUILD Incoming MC - MERCANTIL
+            vFlgOpcErr="N"
+            vOpcion=""
+            trap "trap '' 2" 2
+            PBUILD_INCMCmenu.sh BM ${vFecProc} ${vFecSes}
+            trap ""
+         fi # Incoming MC - MERCANTIL
+
+         if [ "$vOpcADQ" = "108" ]; then  # BUILD Incoming MC - PROVINCIAL
+            vFlgOpcErr="N"
+            vOpcion=""
+            trap "trap '' 2" 2
+            PBUILD_INCMCmenu.sh BP ${vFecProc} ${vFecSes}
+            trap ""
+         fi # Incoming MC - PROVINCIAL
+
+         if [ "$vFlgOpcErr" = "S" ]; then
+            vOpcion="6"
+            echo
+            f_msg "${dpNom} - Opcion Incorrecta."
+            echo
+            echo "... presione [ENTER] para continuar."
+            read vContinua
+         fi
+
+         vFlgOpcErr="N"
+
+      ############################################################
+
+   fi # Incoming de MasterCard  NAIGUATA
+
+   
+   if [ "$vFlgOpcErr" = "S" ]; then
+      vOpcion="6"
+      echo
+      f_msg "${dpNom} - Opcion Incorrecta."
+      echo
+      echo "... presione [ENTER] para continuar."
+      read vContinua
+   fi
+
+   vFlgOpcErr="N"
+  
   
 
 
