@@ -282,8 +282,8 @@ while ( test -z "$vOpcion" || true ) do
          echo
          echo " INCOMING DE NAIGUATA MASTERCARD | Seleccione el Adquirente:"
          echo "------------------------------------------------------------"
-         echo "   [105] Banco Mercantil"
-         echo "   [108] Banco Provincial"
+         echo "   [0105] Banco Mercantil"
+         echo "   [0108] Banco Provincial"
          echo "   [Q] Cancelar"
          echo
          echo "   Seleccione Opcion => \c"
@@ -299,7 +299,7 @@ while ( test -z "$vOpcion" || true ) do
             vFlgOpcErr="N"
          fi
 
-         if [ "$vOpcADQ" = "105" ]; then  # BUILD Incoming MC - MERCANTIL
+         if [ "$vOpcADQ" = "0105" ]; then  # BUILD Incoming MC - MERCANTIL
             vFlgOpcErr="N"
             vOpcion=""
             trap "trap '' 2" 2
@@ -307,7 +307,7 @@ while ( test -z "$vOpcion" || true ) do
             trap ""
          fi # Incoming MC - MERCANTIL
 
-         if [ "$vOpcADQ" = "108" ]; then  # BUILD Incoming MC - PROVINCIAL
+         if [ "$vOpcADQ" = "0108" ]; then  # BUILD Incoming MC - PROVINCIAL
             vFlgOpcErr="N"
             vOpcion=""
             trap "trap '' 2" 2
