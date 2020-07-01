@@ -99,25 +99,6 @@ else
 fi
 }
 
-# f_fechora_Ses | cambia el formato de la fecha Sesión
-#                 YYYYMMDD > DD-MM-YYYY
-# Parametros
-#   pFH : vFecSes
-################################################################################
-f_fechora_Ses ()   ##Esta funcion debe debolver el mes en formato ingles y solo 3 letras no numero 
-{
-pFH="$1"
-vLong=`echo ${pFH} | awk '{print length($0)}'`
-case ${vLong} in
-     8)  # Fecha
-         vDia=`echo $pFH | awk '{print substr($0,7,2)}'`
-         #vMes=`echo $pFH | awk '{print substr($0,5,2)}'`
-         mes=`date +%B --date='$pFH'`
-         vAno=`echo $pFH | awk '{print substr($0,1,4)}'`
-         
-         vpValRet="${vDia}-${vMes}-${vAno}";;
-esac
-}
 
 # f_fechora | cambia el formato de la fecha y hora
 #             YYYYMMDD > DD/MM/YYYY
