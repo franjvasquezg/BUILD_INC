@@ -310,9 +310,8 @@ f_menuOPC ()
    echo "SELECCIONAR DE ENTRANTES                           "
    echo "-----------------------------------------    ----------------------------------"
 
-   echo "[ 1] CREAR INC Debito Maestro (TT${vpValRet_6})       "
+   echo "[ 1] CREAR INC      Debito Maestro (TT${vpValRet_6})       "
    echo "[ 2] CREAR INC NGTA Debito Maestro (T${vpValRet_6}NA)       "
-   #echo "[ 2] INC y Retornos NGTA Credito (${vpValRet_3}-${vpValRet_4})  "
    echo
    #echo "                                             CONSULTAS"
    #echo "                                             ----------------------------------"
@@ -445,10 +444,31 @@ while ( test -z "$vOpcion" || true ) do
       ## Ejecuta Proceso Oracle de Conciliacion
       f_fhmsg "Procesando conciliacion en base de datos"
       vNomFile=`basename ${vFileTMP}`
-      vRet=`ORAExec.sh "exec :rC:=PQPMAESTRO.pf_Load_conciliacion('${pEntAdq}',TO_DATE('$pFecProc','YYYYMMDD'),'${vNomFile}');" $DB`
+      #vRet=`ORAExec.sh "exec :rC:=PQPMAESTRO.pf_Load_conciliacion('${pEntAdq}',TO_DATE('$pFecProc','YYYYMMDD'),'${vNomFile}');" $DB`
       f_vrfvalret "$?" "Error al Ejecutar PQPMAESTRO.pf_Load_conciliacion. Avisar a Soporte."
       vEst=`echo $vRet | awk '{print substr($0,1,1)}'`
       if [ "$vEst" != "0" ]; then
+         vRet=`echo "$vRet" | awk '{print substr($0,2)}'`
+         f_finerr "$vRet"
+      fi
+
+      f_fhmsg "Procesando Informacion de Outgoing..."
+      vRet=`ORAExec.sh "exec :rC:=PBUILDINCMC.F_MAIN (TO_DATE('${pFecProc}','YYYYMMDD'),'${pEntAdq}','MC');" $DB`
+      f_vrfvalret "$?" "Error al ejecutar PBUILDINCMC.F_MAIN. Avisar a Soporte."
+      vEst=`echo $vRet | awk '{print substr($0,1,1)}'`
+      if [ "$vEst" = "0" ]; then
+         vFileOUTMC=`echo "$vRet" | awk '{print substr($0,2,23)}'`
+         f_fhmsg "Archivo Generado: ${vFileOUTMC}"
+         SGCOUTMCconv.sh ${vFileOUTMC}
+         vFileOUTMC=`echo "$vRet" | awk '{print substr($0,25,23)}'`
+         if [ "${vFileOUTMC}" != "" ]; then
+            f_fhmsg "Archivo Generado: ${vFileOUTMC}"
+            SGCOUTMCconv.sh ${vFileOUTMC}
+         fi
+      elif [ "$vEst" = "W" ]; then
+         vRet=`echo "$vRet" | awk '{print substr($0,2)}'`
+         f_fhmsg "$vRet"
+      else
          vRet=`echo "$vRet" | awk '{print substr($0,2)}'`
          f_finerr "$vRet"
       fi
