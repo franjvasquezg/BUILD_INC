@@ -181,7 +181,6 @@ f_menuDAT ()
    vFecSesF=${vpValRet}
    f_fechora ${vFecProc}
    vFecProcF=${vpValRet}
-   #echo " Fecha de Sesion: ${vFecSesF}    Reproceso: ${vOpcRepro}     Fecha de Proceso: ${vFecProcF}"
    echo " Fecha de Sesion: ${vFecSesF}                     Fecha de Proceso: ${vFecProcF}"
 
 }
@@ -198,7 +197,6 @@ f_menuOPC ()
    echo "  -------------------------------------    ----------------------------------"
    echo "   [ 1] Construir Incoming de MC             [00]  Fecha de Sesion"
    echo "                                             [01]  Fecha de Proceso"
-   #echo "   [ 2] Construir Incoming de Visa          [01]  Fecha de Proceso"
    echo "  "
    echo "-------------------------------------------------------------------------------"
    echo " Ver $dpVer | Telefonica Servicios Transaccionales                     [Q] Salir"
@@ -309,15 +307,7 @@ while ( test -z "$vOpcion" || true ) do
          echo " ----------------------------------------------    "
 
          echo " [ 1] CREAR INC MC Debito Maestro (TT${vpValRet_6})       "
-         #echo " [ 2] CREAR INC NGTA Debito Maestro (T${vpValRet_6}NA)       "
          echo
-         #echo "                                             CONSULTAS"
-         #echo "                                             ----------------------------------"
-         #echo "                                             [ 7] Log de Procesos"
-         #echo ""
-         #echo "                                             REPROCESO"
-         #echo "                                             ----------------------------------"
-         #echo "                                             [ 8] Reproceso"
          echo
          echo "-------------------------------------------------------------------------------"
          echo " Ver $dpVer | Telefonica Servicios Transaccionales                  [Q] Salir"
@@ -491,7 +481,6 @@ while ( test -z "$vOpcion" || true ) do
       fi
 
    fi  # Opcion 01 - Fecha de Proceso
-
 
 
    if [ "$vFlgOpcErr" = "S" ]; then
