@@ -498,7 +498,6 @@ while ( test -z "$vOpcion" || true ) do
    fi # Opcion 1 - INCOMING DEBITO MAESTRO
 
 
-
    # OPCION DE LOG DE PROCESOS
 
    if [ "$vOpcion" = "7" ]; then

@@ -448,8 +448,6 @@ while ( test -z "$vOpcion" || true ) do
 
 
 
-
-
    if [ "$vFlgOpcErr" = "S" ]; then
       vOpcion=""
       echo
