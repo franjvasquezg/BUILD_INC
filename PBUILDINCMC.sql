@@ -173,13 +173,19 @@ TYPE Msg_1740 IS RECORD  -- Cobros pagos
       ImpTran            varchar2(12)    :='',
       MonTran            varchar2(3)     :='');
 
-FUNCTION f_main(psfecha VARCHAR2, pcod_entadq VARCHAR2, Marca VARCHAR2) RETURN VARCHAR2;
+FUNCTION f_main(psfecha VARCHAR2, ppfecha VARCHAR2, pcod_entadq VARCHAR2, Marca VARCHAR2) RETURN VARCHAR2;
 --FUNCTION f_main(psfecha VARCHAR2) RETURN VARCHAR2;
 
-PROCEDURE p_mainGen_entrante(pFecha CHAR,pfechaR CHAR,vtipoimc CHAR, pBankChar CHAR, pIdProc NUMBER, pDirOut CHAR,  pmarca NUMBER, pfile OUT VARCHAR);
+PROCEDURE p_mainGen_entrante(pFecha CHAR,pFechaP CHAR,pfechaR CHAR,vtipoimc CHAR, pBankChar CHAR, pIdProc NUMBER, pDirOut CHAR,  pmarca NUMBER, pfile OUT VARCHAR);
 
---Cabecera y Fin de Archivo
-PROCEDURE p_GenRegHF(vcodfuncion CHAR,vfecha VARCHAR2, vCReg VARCHAR2);
+--Cabecera y Fin de Archivo provincial
+PROCEDURE p_GenRegHFp(vcodfuncion CHAR,vfecha VARCHAR2, vCReg VARCHAR2);
+
+--Cabecera y Fin de Archivo mercantil
+PROCEDURE p_GenRegHFm(vcodfuncion CHAR,vfecha VARCHAR2, vCReg VARCHAR2);
+
+--Cabecera y Fin de Archivo mercantil
+PROCEDURE p_GenRegfin(vcodfuncion CHAR);
 
 --Cuerpo Banco Provincial
 PROCEDURE p_GenRegBodyIncBp(pfecha VARCHAR2, vfecha varchar2, pbanco VARCHAR2, pmarca NUMBER);
@@ -239,9 +245,6 @@ FUNCTION f_QUITA_20(pDato CHAR) RETURN CHAR;
 
 function f_FindTarjetaNacional(pIdProc pls_integer, bin_tarjeta varchar2,pBanco char )return pls_integer;
 
-procedure p_getDataInternacional(pIdProc pls_integer, bin_tarjeta varchar2,pBanco char,pgcms out varchar2,plic_prod out varchar2,pcod_pais out varchar2, pcod_reg out varchar2,pcod_programa out varchar2);
-
-
 FUNCTION FN_TIPO_TERM_TRANS (p_idter_41 IN VARCHAR2) RETURN VARCHAR2;
 
 end;
@@ -282,7 +285,7 @@ CREATE OR REPLACE PACKAGE BODY SGCVNZ.PBUILDINCMC IS
 
 
 
-FUNCTION f_main(psfecha VARCHAR2, pcod_entadq VARCHAR2, Marca VARCHAR2) RETURN VARCHAR2 IS
+FUNCTION f_main(psfecha VARCHAR2, ppfecha VARCHAR2, pcod_entadq VARCHAR2, Marca VARCHAR2) RETURN VARCHAR2 IS
 
 
  vDirOUT          VARCHAR2(100)   :='DIR-OUT';
@@ -335,7 +338,7 @@ BEGIN
 
    
   -- Proceso para Banco Mercantil y Provincial
-  p_mainGen_entrante(psfecha,vFechacR,vtipoimc,pcod_entadq,vIDProc,vDirOUT,vMarca,vArchivo);
+  p_mainGen_entrante(psfecha,ppfecha,vFechacR,vtipoimc,pcod_entadq,vIDProc,vDirOUT,vMarca,vArchivo);
   IF LENGTH(TRIM(vArchivo)) > 0 THEN
      vRetorno := vArchivo;
   END IF;
@@ -399,16 +402,17 @@ BEGIN
     RETURN ('Error en la ejecucion de la funcion PQOUTGOINGMC.TIPO_TERM_TRANS: '||SQLERRM);
 END;
 
-PROCEDURE p_mainGen_entrante(pFecha CHAR,pfechaR CHAR,vtipoimc CHAR, pBankChar CHAR, pIdProc NUMBER, pDirOut CHAR,  pmarca NUMBER, pfile OUT VARCHAR) IS
+PROCEDURE p_mainGen_entrante(pFecha CHAR,pFechaP CHAR,pfechaR CHAR,vtipoimc CHAR, pBankChar CHAR, pIdProc NUMBER, pDirOut CHAR,  pmarca NUMBER, pfile OUT VARCHAR) IS
 
  vbank6   CHAR(6):= '';
  pfechad  date;
- vfA      VARCHAR2(2)     :='';
+ vfA      VARCHAR2(4)     :='';
  vfM      VARCHAR2(2)     :='';
  vfD      VARCHAR2(2)     :='';
  vfH      VARCHAR2(2)     :='';
- vfmm      VARCHAR2(2)     :='';
+ vfmm     VARCHAR2(2)     :='';
  vfS      VARCHAR2(2)     :='';
+ --vmar     VARCHAR2(6)     :='';
  
  BEGIN
 
@@ -444,7 +448,7 @@ PROCEDURE p_mainGen_entrante(pFecha CHAR,pfechaR CHAR,vtipoimc CHAR, pBankChar C
       RAISE efinerror;
    END IF;
    
-   --Hora del procesO
+   --Hora del proceso
    select to_char(sysdate, 'HH:MI:SS') into tiempo from dual;
 
    --********************************************************************************************
@@ -453,12 +457,17 @@ PROCEDURE p_mainGen_entrante(pFecha CHAR,pfechaR CHAR,vtipoimc CHAR, pBankChar C
 
     IF vCantRegMer > 0 AND pBankChar = 'BM' AND  pmarca = '8010' THEN
          --generando File
-         vfA    := SUBSTR(pFecha,3,2);
-         vfM    := SUBSTR(pFecha,5,2);
-         vfD    := SUBSTR(pFecha,7,2);
+         vfA    := SUBSTR(pFechaP,1,4);
+         vfM    := SUBSTR(pFechaP,5,2);
+         vfD    := SUBSTR(pFechaP,7,2);
+         vfH    := SUBSTR(tiempo,1,2);
+         vfmm   := SUBSTR(tiempo,4,2);
+         vfS    := SUBSTR(tiempo,7,2);
          
          vFile   := '';
-         vFile   := 'TT'||vtipoimc||'T0.'||vfA||'-'||vfM||'-'||vfD||'00'||'00'||'00'||'.001';
+         --vFile   := 'TT'||vtipoimc||vfA||'-'||vfM||'-'||vfD||'-'||vfS;
+         --vFile   := 'TT'||vtipoimc||'T0.'||vfA||'-'||vfM||'-'||vfD||'-'||vfH||'-'||vfmm||'-'||vfS||'.001';
+         vFile   := 'TT'||vtipoimc||'T0.'||vfA||'-'||vfM||'-'||vfD||'-'||vfS||'.001';
          pfile   := vfile;
 
          --validacion si archivo esta abierto
@@ -473,18 +482,19 @@ PROCEDURE p_mainGen_entrante(pFecha CHAR,pfechaR CHAR,vtipoimc CHAR, pBankChar C
         SELECT count(p00idmsg) into vCReg
         FROM mcp_bm 
            WHERE  cod_entadq = pBankChar
-           AND p28sesion = pFecha  --TO_CHAR(pFecha-1,'YYYYMMDD') fecha de session 08/07/2020
+           AND p28sesion = pFecha         --TO_CHAR(pFecha-1,'YYYYMMDD') fecha de session 08/07/2020
            AND p48tiptra LIKE '10%'
-           AND p71nummen LIKE pmarca||'%';
+           and P58IDAUT ='358011';        --35 MC 8011 MAESTRO MERCANTIL AND p71nummen LIKE pmarca||'%';
          
 
          --inicia proceso de outgoing
          vPaso   := 'Paso 02';
-         pqmonproc.inslog(pIdProc, 'M', 'inicia Proceso de Outgoing MasterCard BM');
-         p_genRegHF('FHDR',pfechaR,vCReg);  --pFecha6
-         p_GenRegBodyIncBm(pFecha,pfechaR,vbank4,pmarca);
+         pqmonproc.inslog(pIdProc, 'M', 'inicia Proceso de contrucción de entrante BM');
+         p_genRegHFm('FHDR',pfechaR,vCReg);  --pFecha6
+         p_GenRegBodyIncBm(pFecha,pfechaR,vbank4,'358011'); --pmarca
          --p_GenReg1740(pFecha6,vbank4,pcodhcierre);      --p_GenReg1740(pFecha6,vbank6);
-         p_genRegHF('FTRL',pfechaR,vCReg); --pFecha6
+         p_genRegHFm('FTRL',pfechaR,vCReg); --pFecha6
+         p_genRegfin('FTRL'); 
          utl_file.fCLOSE(vIDFile);
 
          pqmonproc.inslog(vidproc, 'M', 'fin ok | archivo: '||pDirOut||'/'||vFile);
@@ -493,15 +503,17 @@ PROCEDURE p_mainGen_entrante(pFecha CHAR,pfechaR CHAR,vtipoimc CHAR, pBankChar C
          
     ELSIF vCantRegMer > 0 AND pBankChar = 'BM' AND  pmarca = '9010' THEN
             --generando File
-         vfA    := SUBSTR(pFecha,3,2);
-         vfM    := SUBSTR(pFecha,5,2);
-         vfD    := SUBSTR(pFecha,7,2);
-         vfH    := SUBSTR(pFecha,1,2);
-         vfmm    := SUBSTR(pFecha,4,2);
-         vfS    := SUBSTR(pFecha,7,2);
+         vfA    := SUBSTR(pFechaP,1,4);
+         vfM    := SUBSTR(pFechaP,5,2);
+         vfD    := SUBSTR(pFechaP,7,2);
+         vfH    := SUBSTR(tiempo,1,2);
+         vfmm   := SUBSTR(tiempo,4,2);
+         vfS    := SUBSTR(tiempo,7,2);
          
          vFile   := '';
-         vFile   := 'TT'||vtipoimc||'T0.'||vfA||'-'||vfM||'-'||vfD||'-'||vfH||'-'||vfmm||'-'||vfS||'.001';
+         --vFile   := 'TT'||vtipoimc||vfA||'-'||vfM||'-'||vfD||'-'||vfS;
+         --vFile   := 'TT'||vtipoimc||'T0.'||vfA||'-'||vfM||'-'||vfD||'-'||vfH||'-'||vfmm||'-'||vfS||'.001';
+         vFile   := 'TT'||vtipoimc||'T0.'||vfA||'-'||vfM||'-'||vfD||'-'||vfS||'.001';
          pfile   := vfile;
 
          --validacion si archivo esta abierto
@@ -518,15 +530,16 @@ PROCEDURE p_mainGen_entrante(pFecha CHAR,pfechaR CHAR,vtipoimc CHAR, pBankChar C
            WHERE  cod_entadq = pBankChar
            AND p28sesion = pFecha  --TO_CHAR(pFecha-1,'YYYYMMDD')
            AND p48tiptra LIKE '10%'
-           AND p71nummen LIKE pmarca||'%';
+           and P58IDAUT ='359011';              --35 MC 8011 MAESTRO MERCANTIL AND p71nummen LIKE pmarca||'%';
            
          --inicia proceso de outgoing
          vPaso   := 'Paso 02';
-         pqmonproc.inslog(pIdProc, 'M', 'inicia Proceso de Outgoing MasterCard BM');
-         p_genRegHF('FHDR',pfechaR,vCReg);  --pFecha6
-         p_GenRegBodyIncBm(pFecha,pfechaR,vbank4,pmarca);
-         --p_GenReg1740(pFecha6,vbank4,pcodhcierre);      --p_GenReg1740(pFecha6,vbank6);
-         p_genRegHF('FTRL',pfechaR,vCReg); --pFecha6
+         pqmonproc.inslog(pIdProc, 'M', 'inicia Proceso de contrucción de entrante BM');
+         p_genRegHFm('FHDR',pfechaR,vCReg);  --pFecha6
+         p_GenRegBodyIncBm(pFecha,pfechaR,vbank4,'359011');  --pmarca
+         --p_GenReg1740(pFecha6,vbank4,pcodhcierre);         --p_GenReg1740(pFecha6,vbank6);
+         p_genRegHFm('FTRL',pfechaR,vCReg); --pFecha6
+         p_genRegfin('FTRL'); 
          utl_file.fCLOSE(vIDFile);
 
          pqmonproc.inslog(vidproc, 'M', 'fin ok | archivo: '||pDirOut||'/'||vFile);
@@ -540,15 +553,17 @@ PROCEDURE p_mainGen_entrante(pFecha CHAR,pfechaR CHAR,vtipoimc CHAR, pBankChar C
 
    IF vCantRegPro > 0 AND pBankChar = 'BP' AND  pmarca = '8010' THEN
          --generando File
-         vfA    := SUBSTR(pFecha,1,4);
-         vfM    := SUBSTR(pFecha,5,2);
-         vfD    := SUBSTR(pFecha,7,2);
+         vfA    := SUBSTR(pFechaP,1,4);
+         vfM    := SUBSTR(pFechaP,5,2);
+         vfD    := SUBSTR(pFechaP,7,2);
          vfH    := SUBSTR(tiempo,1,2);
          vfmm   := SUBSTR(tiempo,4,2);
          vfS    := SUBSTR(tiempo,7,2);
          
          vFile   := '';
-         vFile   := 'TT'||vtipoimc||'T0.'||vfA||'-'||vfM||'-'||vfD||'-'||vfH||'-'||vfmm||'-'||vfS||'.001';
+         --vFile   := 'TT'||vtipoimc||vfA||'-'||vfM||'-'||vfD||'-'||vfS;
+         --vFile   := 'TT'||vtipoimc||'T0.'||vfA||'-'||vfM||'-'||vfD||'-'||vfH||'-'||vfmm||'-'||vfS||'.001';
+         vFile   := 'TT'||vtipoimc||'T0.'||vfA||'-'||vfM||'-'||vfD||'-'||vfS||'.001';
          pfile   := vfile;
 
          --validacion si archivo esta abierto
@@ -565,16 +580,17 @@ PROCEDURE p_mainGen_entrante(pFecha CHAR,pfechaR CHAR,vtipoimc CHAR, pBankChar C
            WHERE  cod_entadq = pBankChar
            AND p28sesion = pFecha  --TO_CHAR(pFecha-1,'YYYYMMDD')--FEcha de session
            AND p48tiptra LIKE '10%'
-           AND p71nummen LIKE pmarca||'%';
+           and P58IDAUT ='358012';              --35 MC 8011 MAESTRO MERCANTIL AND p71nummen LIKE pmarca||'%';
 
          --inicia proceso de outgoing
          vPaso   := 'Paso 02';
-         pqmonproc.inslog(pIdProc, 'M', 'inicia Proceso de Outgoing MasterCard BP');
-         p_genRegHF('FHDR',pfechaR,vCReg);
-         p_GenRegBodyIncBp(pFecha,pfechaR,vbank4,pmarca);
+         pqmonproc.inslog(pIdProc, 'M', 'inicia Proceso de contrucción de entrante BP');
+         p_genRegHFp('FHDR',pfechaR,vCReg);
+         p_GenRegBodyIncBp(pFecha,pfechaR,vbank4,'358012');  --pmarca 
          --p_GenRegAnulacion(pFecha6,vbank4,pcodhcierre);
          --p_GenReg1740(pFecha6,vbank4,pcodhcierre);
-         p_genRegHF('FTRL',pfechaR,vCReg);
+         p_genRegHFp('FTRL',pfechaR,vCReg);
+         p_genRegfin('FTRL'); 
          utl_file.fCLOSE(vIDFile);
 
          pqmonproc.inslog(vidproc, 'M', 'fin ok | archivo: '||pDirOut||'/'||vFile);
@@ -583,16 +599,17 @@ PROCEDURE p_mainGen_entrante(pFecha CHAR,pfechaR CHAR,vtipoimc CHAR, pBankChar C
          
     ELSIF vCantRegPro > 0 AND pBankChar = 'BP' AND  pmarca = '9010' THEN
          --generando File
-         vfA    := SUBSTR(pFecha,3,2);
-         vfM    := SUBSTR(pFecha,5,2);
-         vfD    := SUBSTR(pFecha,7,2);
-         select current_date into tiempo from dual;
-         vfH    := SUBSTR(pFecha,9,2);
-         vfmm    := SUBSTR(pFecha,12,2);
-         vfS    := SUBSTR(pFecha,15,2);
+         vfA    := SUBSTR(pFechaP,1,4);
+         vfM    := SUBSTR(pFechaP,5,2);
+         vfD    := SUBSTR(pFechaP,7,2);
+         vfH    := SUBSTR(tiempo,1,2);
+         vfmm   := SUBSTR(tiempo,4,2);
+         vfS    := SUBSTR(tiempo,7,2);
          
          vFile   := '';
-         vFile   := 'TT'||vtipoimc||'T0.'||vfA||'-'||vfM||'-'||vfD||'-'||vfH||'-'||vfmm||'-'||vfS||'.001';
+         --vFile   := 'TT'||vtipoimc||vfA||'-'||vfM||'-'||vfD||'-'||vfS;
+         --vFile   := 'TT'||vtipoimc||'T0.'||vfA||'-'||vfM||'-'||vfD||'-'||vfH||'-'||vfmm||'-'||vfS||'.001';
+         vFile   := 'TT'||vtipoimc||'T0.'||vfA||'-'||vfM||'-'||vfD||'-'||vfS||'.001';
          pfile   := vfile;
 
          --validacion si archivo esta abierto
@@ -609,16 +626,17 @@ PROCEDURE p_mainGen_entrante(pFecha CHAR,pfechaR CHAR,vtipoimc CHAR, pBankChar C
            WHERE  cod_entadq = pBankChar
            AND p28sesion = pFecha  --TO_CHAR(pFecha-1,'YYYYMMDD')
            AND p48tiptra LIKE '10%'
-           AND p71nummen LIKE pmarca||'%';
+           and P58IDAUT ='359012';              --35 MC 8011 MAESTRO MERCANTIL AND p71nummen LIKE pmarca||'%';
 
          --inicia proceso de outgoing
          vPaso   := 'Paso 02';
-         pqmonproc.inslog(pIdProc, 'M', 'inicia Proceso de Outgoing MasterCard BP');
+         pqmonproc.inslog(pIdProc, 'M', 'inicia Proceso de contrucción de entrante BP');
 
-         p_genRegHF('FHDR',pfechaR,vCReg);
-         p_GenRegBodyIncBp(pFecha,pfechaR,vbank4,pmarca);
+         p_genRegHFp('FHDR',pfechaR,vCReg);
+         p_GenRegBodyIncBp(pFecha,pfechaR,vbank4,'359012');  --pmarca
          --p_GenReg1740(pFecha6,vbank4,pcodhcierre);
-         p_genRegHF('FTRL',pfechaR,vCReg);
+         p_genRegHFp('FTRL',pfechaR,vCReg);
+         p_genRegfin('FTRL'); 
          utl_file.fCLOSE(vIDFile);
 
          pqmonproc.inslog(vidproc, 'M', 'fin ok | archivo: '||pDirOut||'/'||vFile);
@@ -645,6 +663,8 @@ PROCEDURE p_GenRegBodyIncBp(pfecha VARCHAR2, vfecha varchar2, pbanco VARCHAR2, p
  pds0158_de48       VARCHAR2(20)    :='';
  mb40               VARCHAR2(1)     :='';
  vcodser            VARCHAR2(3)     :=NULL;
+ --vmarca             number(6) ;
+
 
 
  CURSOR cr_reginc IS
@@ -664,7 +684,7 @@ PROCEDURE p_GenRegBodyIncBp(pfecha VARCHAR2, vfecha varchar2, pbanco VARCHAR2, p
    WHERE  cod_entadq = 'BP' --pbanco
    AND p28sesion = pfecha   --TO_CHAR(dFecha-1,'YYYYMMDD')
    AND p48tiptra LIKE '10%'
-   AND p71nummen LIKE pmarca||'%';
+   AND P58IDAUT = pmarca;    -- AND p71nummen LIKE pmarca||'%';
 
  BEGIN
 
@@ -686,9 +706,9 @@ PROCEDURE p_GenRegBodyIncBp(pfecha VARCHAR2, vfecha varchar2, pbanco VARCHAR2, p
           vt1240C.TransactionDate   := vfecha;
           vt1240C.TransactionTime   := SUBSTR(c.p12timloc,9,6);
           vt1240C.PANLength         := length(c.p02numtar);
-          vt1240C.PAN               := lpad(c.p02numtar,19,' ');
+          vt1240C.PAN               := rpad(c.p02numtar,19,' '); --lpad(c.p02numtar,19,' ');
           vt1240C.ProcessingCode    := '000000';
-          vt1240C.TraceNumber       :=  c.p11idetra; 
+          vt1240C.TraceNumber       :=  lpad(c.p11idetra,6,'0');
           vt1240C.MerchantType      :=  '0000';
           vt1240C.POSEntry          :=  '000';
           vt1240C.ReferenceNumber   := '000000000000';
@@ -715,8 +735,8 @@ PROCEDURE p_GenRegBodyIncBp(pfecha VARCHAR2, vfecha varchar2, pbanco VARCHAR2, p
           vt1240C.ImpDecSett        := '2';                     --  Implied decimal of DE 50, Currency Code—Settlement
           vt1240C.ConvRatSett       := '11000000';              -- Conversion Rate— Settlement
           vt1240C.CompAmtSett       := lpad(c.P04IMPTRA,12,'0');                -- Completed amount (DE 5)represented in settlement currency (DE 50).
-          vt1240C.CompAmoSettInd    := UPPER(SUBSTR(c.P46TCUOT04,3,1));           -- Indicates whether the value is a credit or debit to the receiver. Valid  
-          vt1240C.InterchangeFee    := lpad(SUBSTR(c.P46TCUOT04,4,8),12,'0');     -- Batch generated—same currency as DE 50
+          vt1240C.CompAmoSettInd    := UPPER(SUBSTR(c.P46TCUOT01,3,1));           -- Indicates whether the value is a credit or debit to the receiver. Valid  
+          vt1240C.InterchangeFee    := LPAD(NVL(lpad(SUBSTR(C.P46TCUOT01,4,8),10,'0'),0),10,'0');     -- Batch generated—same currency as DE 50
           vt1240C.InterchangeFeeI   := UPPER(c.p48tipmov);     -- 
           vt1240C.ServLevelInd      :='000';     -- 
           vt1240C.ResponseCode2     :='  ';     -- 
@@ -799,7 +819,7 @@ PROCEDURE p_GenRegBodyIncBm(pfecha VARCHAR2, vfecha varchar2, pbanco VARCHAR2, p
    WHERE  cod_entadq = 'BM'
    AND p28sesion = pfecha   --TO_CHAR(dFecha-1,'YYYYMMDD')
    AND p48tiptra LIKE '10%'
-   AND p71nummen LIKE pmarca||'%';
+   AND P58IDAUT = pmarca;  -- AND p71nummen LIKE pmarca||'%';
 
  BEGIN
 
@@ -821,9 +841,9 @@ PROCEDURE p_GenRegBodyIncBm(pfecha VARCHAR2, vfecha varchar2, pbanco VARCHAR2, p
           vt1240C.TransactionDate   := vfecha;
           vt1240C.TransactionTime   := SUBSTR(c.p12timloc,9,6);
           vt1240C.PANLength         := length(c.p02numtar);
-          vt1240C.PAN               := lpad(c.p02numtar,19,' ');
+          vt1240C.PAN               := rpad(c.p02numtar,19,' '); 
           vt1240C.ProcessingCode    := '000000';
-          vt1240C.TraceNumber       :=  c.p11idetra; 
+          vt1240C.TraceNumber       :=  lpad(c.p11idetra,6,'0');   
           vt1240C.MerchantType      :=  '0000';
           vt1240C.POSEntry          :=  '000';
           vt1240C.ReferenceNumber   := '000000000000';
@@ -850,8 +870,8 @@ PROCEDURE p_GenRegBodyIncBm(pfecha VARCHAR2, vfecha varchar2, pbanco VARCHAR2, p
           vt1240C.ImpDecSett        := '2';                          --  Implied decimal of DE 50, Currency Code—Settlement
           vt1240C.ConvRatSett       := '11000000';                   -- Conversion Rate— Settlement
           vt1240C.CompAmtSett       := lpad(c.P04IMPTRA,12,'0');                -- Completed amount (DE 5)represented in settlement currency (DE 50).
-          vt1240C.CompAmoSettInd    := UPPER(SUBSTR(c.P46TCUOT01,3,1));         -- Indicates whether the value is a credit or debit to the receiver. Valid  
-          vt1240C.InterchangeFee    := lpad(SUBSTR(c.P46TCUOT01,4,8),10,'0');   -- Batch generated—same currency as DE 50
+          vt1240C.CompAmoSettInd    := UPPER(SUBSTR(c.p46tcuot01,3,1));         -- Indicates whether the value is a credit or debit to the receiver. Valid  
+          vt1240C.InterchangeFee    := lpad(SUBSTR(c.p46tcuot01,4,8),10,'0');   -- Batch generated—same currency as DE 50
           vt1240C.InterchangeFeeI   := UPPER(c.p48tipmov);                      -- 
           vt1240C.ServLevelInd      :='000';                                    -- 
           vt1240C.ResponseCode2     :='  ';                                     -- 
@@ -895,7 +915,7 @@ PROCEDURE p_GenRegBodyIncBm(pfecha VARCHAR2, vfecha varchar2, pbanco VARCHAR2, p
     END LOOP;
 END;
 
-procedure p_GenRegHF(vcodfuncion CHAR,vfecha varchar2,vCReg varchar2)as
+procedure p_GenRegHFp(vcodfuncion CHAR,vfecha varchar2,vCReg varchar2)as
     m1644          Msg_1644;
     TotRCount        varchar2(11)     := '';
 
@@ -910,7 +930,7 @@ Begin
       if vcodfuncion = 'FHDR' then
            m1644.MessTypeInd       := 'FHDR';
            m1644.SettDate          := vfecha;
-           m1644.ProcessorID       := '0000000000';
+           m1644.ProcessorID       := '9000000313';  -- identificador del banco
            m1644.RecordSize        := '250';
            m1644.FileType          := 'M';
            m1644.VersionArch       := 'VERSION 16';
@@ -922,7 +942,7 @@ Begin
       --trailer de registro
        if  vcodfuncion = 'FTRL' then
           m1644.MessTypeInd       := 'FTRL';
-          m1644.ProcessorID       := '0000000000';
+          m1644.ProcessorID       := '9000000313';  -- identificador del banco
           m1644.TotRecordCount    := TotRCount;
           m1644.Filler2            := '                                                                                                                                                                                                                                 '; --225 ESPACIOS
        end if;
@@ -941,7 +961,78 @@ Begin
 
 End;
 
+procedure p_GenRegHFm(vcodfuncion CHAR,vfecha varchar2,vCReg varchar2)as
+    m1644          Msg_1644;
+    TotRCount        varchar2(11)     := '';
 
+Begin
+      --inicia proceso de outgoing Banco Provincial
+      vPaso   := 'Paso 06';
+      
+      TotRCount := LPAD(vCReg,11,'0');
+
+
+      --cabecera de registro
+      if vcodfuncion = 'FHDR' then
+           m1644.MessTypeInd       := 'FHDR';
+           m1644.SettDate          := vfecha;
+           m1644.ProcessorID       := '9000000275';   -- identificador del banco
+           m1644.RecordSize        := '250';
+           m1644.FileType          := 'M';
+           m1644.VersionArch       := 'VERSION 16';
+           m1644.Filler            := '                                                                                                                                                                                                                        '; --216 ESPACIOS
+           
+
+      end if;
+
+      --trailer de registro
+       if  vcodfuncion = 'FTRL' then
+          m1644.MessTypeInd       := 'FTRL';
+          m1644.ProcessorID       := '9000000275';   -- identificador del banco
+          m1644.TotRecordCount    := TotRCount;
+          m1644.Filler2            := '                                                                                                                                                                                                                                 '; --225 ESPACIOS
+       end if;
+
+
+     vCad1240:= m1644.MessTypeInd ||   m1644.SettDate||               m1644.ProcessorID||
+                m1644.RecordSize ||   m1644.FileType||  m1644.VersionArch||
+                m1644.Filler||   m1644.TotRecordCount|| m1644.Filler2;
+
+     --formato fijo a 1024 posiciones
+     --vlinea   := rpad(vlinea,1024,' ');
+
+     utl_file.put_raw(vidfile, utl_raw.cast_to_raw(vCad1240),true);
+     utl_file.new_line(vidfile);
+     utl_file.fflush(vidfile);
+
+End;
+
+procedure p_GenRegfin(vcodfuncion CHAR)as
+    m1644          Msg_1644;
+
+Begin
+      --inicia proceso de outgoing Banco Provincial
+      vPaso   := 'Paso 06';
+      
+      --trailer de registro
+       if  vcodfuncion = 'FTRL' then
+          m1644.MessTypeInd       := 'SUB';
+          m1644.Filler2            := '                                                                                                                                                                                                                                                       '; --247 ESPACIOS
+       end if;
+
+
+     vCad1240:= m1644.MessTypeInd ||   m1644.SettDate|| m1644.ProcessorID||
+                m1644.RecordSize ||   m1644.FileType||  m1644.VersionArch||
+                m1644.Filler||   m1644.TotRecordCount|| m1644.Filler2;
+
+     --formato fijo a 1024 posiciones
+     --vlinea   := rpad(vlinea,1024,' ');
+
+     utl_file.put_raw(vidfile, utl_raw.cast_to_raw(vCad1240),true);
+     utl_file.new_line(vidfile);
+     utl_file.fflush(vidfile);
+
+End;
 
 PROCEDURE p_GenReg1740(pfecha  varchar2, pbanco varchar2, pcodhcierre CHAR) IS
  strhexa1240C       varchar2(32)     := '';
@@ -1273,34 +1364,33 @@ function f_AtLeastOne(pfecha varchar2,pbanco varchar2,marca number)return pls_in
             SELECT count(p00idmsg) into vCountReg
             FROM mcp_bm 
             WHERE  cod_entadq = pbanco
-            AND p28sesion = pfecha  --AND p28sesion = TO_CHAR(pfecha-1,'YYYYMMDD')--FECHA DE SESSION
-            --AND p28sesion = TO_CHAR(TO_DATE(pfecha,'YYYYMMDD')-1,'YYYYMMDD')--Conversion a Char de fecha - 1. CON FECHA  PROCESO
-            AND p48tiptra LIKE '10%'
-            AND p71nummen LIKE marca||'%'
+            AND p28sesion = pfecha              --AND p28sesion = TO_CHAR(pfecha-1,'YYYYMMDD')--FECHA DE SESSION
+            AND p48tiptra LIKE '10%'            --AND p28sesion = TO_CHAR(TO_DATE(pfecha,'YYYYMMDD')-1,'YYYYMMDD')--Conversion a Char de fecha - 1. CON FECHA  PROCESO
+            and P58IDAUT ='358011'              --35 MC 8011 MAESTRO MERCANTIL  --AND p71nummen LIKE marca||'%'  
             and rownum < 2;
       elsif marca = '8010' and pbanco = 'BP' then
             SELECT count(p00idmsg) into vCountReg
             FROM mcp_bp 
             WHERE  cod_entadq = pbanco
-            AND p28sesion = pfecha  --AND p28sesion = TO_CHAR(pfecha-1,'YYYYMMDD')
+            AND p28sesion = pfecha              
             AND p48tiptra LIKE '10%'
-            AND p71nummen LIKE marca||'%'
+            and P58IDAUT ='358012'               --35 MC 8012 MAESTRO provincial 
             and rownum < 2;
       elsif marca = '9010' and pbanco = 'BM' then
             SELECT count(p00idmsg) into vCountReg
             FROM mcp_bm 
             WHERE  cod_entadq = pbanco
-            AND p28sesion = pfecha  --AND p28sesion = TO_CHAR(pfecha-1,'YYYYMMDD')
+            AND p28sesion = pfecha          
             AND p48tiptra LIKE '10%'
-            AND p71nummen LIKE marca||'%'
+            and P58IDAUT ='359011'        
             and rownum < 2;
       elsif marca = '9010' and pbanco = 'BP' then
             SELECT count(p00idmsg) into vCountReg
             FROM mcp_bp 
             WHERE  cod_entadq = pbanco
-            AND p28sesion = pfecha  --AND p28sesion = TO_CHAR(pfecha-1,'YYYYMMDD')
+            AND p28sesion = pfecha        
             AND p48tiptra LIKE '10%'
-            AND p71nummen LIKE marca||'%'
+            and P58IDAUT ='359012'       
             and rownum < 2;
       
       end if;
@@ -1449,48 +1539,6 @@ exception
       verrcod := '16';
       raise efinerror;
 end;
-
-
-procedure p_getDataInternacional(pIdProc pls_integer, bin_tarjeta varchar2,pBanco char,pgcms out varchar2,plic_prod out varchar2,pcod_pais out varchar2, pcod_reg out varchar2,pcod_programa out varchar2) is
-    vcont          pls_integer :=0;
-
-    cursor cur_dataInternacional(bin_tarjeta varchar2) is
-    select val_rango_menor, val_rango_mayor, cod_producto_gcms, cod_licencia_producto, cod_alf_pais, cod_region,ind_prog_tarjeta
-      from bines_mc
-     where to_number(val_rango_menor) <= to_number(rpad(substr(bin_tarjeta,1,19),19,'0'))
-       and to_number(val_rango_mayor) >= to_number(rpad(substr(bin_tarjeta,1,19),19,'9'))
-       and ind_activo                  = 'A'
-       and cod_alf_pais               != 'VEN'
-       and cod_entadq                  = pBanco
-       and ind_prog_tarjeta            IN ('MCC','DMC');
-
-begin
-
-    for c in cur_dataInternacional(bin_tarjeta) loop
-        pgcms       := c.cod_producto_gcms;
-        plic_prod   := c.cod_licencia_producto;
-        pcod_pais   := c.cod_alf_pais;
-        pcod_reg    := c.cod_region;
-        pcod_programa := c.ind_prog_tarjeta;
-        vcont       := vcont + 1;
-    end loop;
-
-    if vcont = 0 then
-       verrmsg := 'No existe rango menor y mayor para la tarjeta Nro '||bin_tarjeta;
-       verrcod := '17';
-       pqmonproc.inslog(pIdProc, 'W', vErrMsg);
-       raise efinerror;
-    end if;
-
-    if vcont > 1 then
-       vErrMsg := 'WARNING: Existen '||TO_CHAR(vcont)||' rangos de valor para la tarjeta: '||bin_tarjeta||'.';
-       vcont   := 1;
-       pqmonproc.inslog(pIdProc, 'W', vErrMsg);
-    end if;
-
-end;
-
-
 
 function f_IsDate(pstring varchar2)return boolean is
  ld_date   date;
