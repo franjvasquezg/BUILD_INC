@@ -132,6 +132,31 @@ case ${vLong} in
 esac
 }
 
+# f_getCTAMC () | codigo de tipo de archivo
+################################################################################
+f_getCTAMC ()
+{
+
+pTipo="$1"
+
+if [ "${pTipo}" = "INCOMING" ]; then
+     vpValRet=`echo $COD_TIPOARCHMC_NGTA | awk '{print substr($0,1,3)}'`
+elif [ "${pTipo}" = "INCRET" ]; then
+     vpValRet=`echo $COD_TIPOARCHMC_NGTA | awk '{print substr($0,4,3)}'`
+elif [ "${pTipo}" = "INCMATCH" ]; then
+     vpValRet=`echo $COD_TIPOARCHMC_NGTA | awk '{print substr($0,7,3)}'`
+elif [ "${pTipo}" = "INCMAESTRONGTA" ]; then
+     vpValRet=`echo $COD_TIPOARCHMC_NGTA | awk '{print substr($0,10,3)}'`
+elif [ "${pTipo}" = "REPCREDMC" ]; then
+     vpValRet=`echo $COD_TIPOARCHMC_NGTA | awk '{print substr($0,13,3)}'`
+elif [ "${pTipo}" = "REPDEBMAESTRO" ]; then
+     vpValRet=`echo $COD_TIPOARCHMC_NGTA | awk '{print substr($0,16,3)}'`
+elif [ "${pTipo}" = "REPDEBMAESTROSW" ]; then
+     vpValRet=`echo $COD_TIPOARCHMC_NGTA | awk '{print substr($0,19,5)}'`
+fi
+
+}
+
 
 # f_menuCAB () | Encabezado Menu Principal
 ################################################################################
@@ -156,7 +181,6 @@ f_menuDAT ()
    vFecSesF=${vpValRet}
    f_fechora ${vFecProc}
    vFecProcF=${vpValRet}
-   #echo " Fecha de Sesion: ${vFecSesF}    Reproceso: ${vOpcRepro}     Fecha de Proceso: ${vFecProcF}"
    echo " Fecha de Sesion: ${vFecSesF}                     Fecha de Proceso: ${vFecProcF}"
 
 }
@@ -173,7 +197,6 @@ f_menuOPC ()
    echo "  -------------------------------------    ----------------------------------"
    echo "   [ 1] Construir Incoming de MC             [00]  Fecha de Sesion"
    echo "                                             [01]  Fecha de Proceso"
-   #echo "   [ 2] Construir Incoming de Visa          [01]  Fecha de Proceso"
    echo "  "
    echo "-------------------------------------------------------------------------------"
    echo " Ver $dpVer | Telefonica Servicios Transaccionales                     [Q] Salir"
@@ -234,7 +257,7 @@ while ( test -z "$vOpcion" || true ) do
 
    f_menuCAB
    f_menuDAT
-   f_menuOPC
+   f_menuOPC 
 
    if [ "${vOpcion}" = "" ]; then
       echo
@@ -254,21 +277,7 @@ while ( test -z "$vOpcion" || true ) do
    fi
 
 
-
-   # INCOMING DE VISA
-
-   if [ "$vOpcion" = "2" ]; then
-
-         clear   #limpia la pantalla para visualizarmejor el menu ip1302 fjvg
-         f_menuCAB
-         vFlgOpcErr="N"
-         vOpcion=""
-         
-         echo "    [xx]  Incoming de Visa NAIGUATA <<<EN CONTRUCCION>>>"
-         trap ""   
-   fi # Opcion 2 - Incoming Naiguata VISA
-
-   # INCOMING DE VISA
+   # INCOMING DE MASTER CARD 
 
    if [ "$vOpcion" = "1" ]; then   # construccion Incoming de Maestro MasterCard
 
@@ -278,14 +287,31 @@ while ( test -z "$vOpcion" || true ) do
       vFlgOpcErr="N"
       vOpcion=""
       ############################################################
-      # INCOMING DE MASTERCARD
+         f_getCTAMC INCOMING
+         vpValRet_3=${vpValRet}
+         f_getCTAMC INCRET
+         vpValRet_4=${vpValRet}
+         f_getCTAMC INCMATCH
+         vpValRet_5=${vpValRet}
+         f_getCTAMC INCMAESTRONGTA
+         vpValRet_6=${vpValRet}
+         f_getCTAMC REPCREDMC
+         vpValRet_8=${vpValRet}
+         f_getCTAMC REPDEBMAESTRO
+         vpValRet_9=${vpValRet}
+         f_getCTAMC REPDEBMAESTROSW
+         vpValRet_10=${vpValRet}
 
+         echo "-------------------------------------------------------------------------------"
+         echo "  SELECCIONAR ENTRANTES                           "
+         echo " ----------------------------------------------    "
+
+         echo " [ 1] CREAR INC MC Debito Maestro (TT${vpValRet_6})       "
          echo
-         echo " INCOMING MASTERCARD | Seleccione el Adquirente:"
-         echo "------------------------------------------------"
-         echo "   [0105] Banco Mercantil"
-         echo "   [0108] Banco Provincial"
-         echo "   [Q] Cancelar"
+         echo
+         echo "-------------------------------------------------------------------------------"
+         echo " Ver $dpVer | Telefonica Servicios Transaccionales                  [Q] Salir"
+         echo "-------------------------------------------------------------------------------"
          echo
          echo "   Seleccione Opcion => \c"
          read vOpcADQ
@@ -296,28 +322,29 @@ while ( test -z "$vOpcion" || true ) do
          fi
 
          if [ "$vOpcADQ" = "" ]; then
-            vOpcion="6"
+            vOpcion="00"
             vFlgOpcErr="N"
          fi
 
-         if [ "$vOpcADQ" = "0105" ]; then  # BUILD Incoming MC - MERCANTIL
+         if [ "$vOpcADQ" = "1" ]; then  # Incoming MARCA MASTER CARD
             vFlgOpcErr="N"
             vOpcion=""
             trap "trap '' 2" 2
-            TsTQAMCmenu.sh BM ${vFecProc} ${vFecSes}
+            TsTQAMCmenu.sh MC ${vFecProc} ${vFecSes}
             trap ""
-         fi # Incoming MC - MERCANTIL
+         fi # Incoming MARCA MASTER CARD
 
-         if [ "$vOpcADQ" = "0108" ]; then  # BUILD Incoming MC - PROVINCIAL
+         if [ "$vOpcADQ" = "2" ]; then  # Incoming MARCA NAIGUATA
             vFlgOpcErr="N"
             vOpcion=""
             trap "trap '' 2" 2
-            TsTQAMCmenu.sh BP ${vFecProc} ${vFecSes}
+            TsTQAMCmenu.sh NG ${vFecProc} ${vFecSes}
             trap ""
-         fi # Incoming MC - PROVINCIAL
+         fi # Incoming MARCA NAIGUATA
+
 
          if [ "$vFlgOpcErr" = "S" ]; then
-            vOpcion="6"
+            vOpcion="00"
             echo
             f_msg "${dpNom} - Opcion Incorrecta."
             echo
@@ -331,9 +358,21 @@ while ( test -z "$vOpcion" || true ) do
 
    fi # Incoming de Maestro MasterCard
 
+   # INCOMING DE VISA
+
+   if [ "$vOpcion" = "2" ]; then
+
+         clear   #limpia la pantalla para visualizarmejor el menu ip1302 fjvg
+         f_menuCAB
+         vFlgOpcErr="N"
+         vOpcion=""
+         
+         echo "    [xx]  Incoming de Visa NAIGUATA <<<EN CONTRUCCION>>>"
+         trap ""   
+   fi # Opcion 2 - Incoming Naiguata VISA
    
    if [ "$vFlgOpcErr" = "S" ]; then
-      vOpcion="6"
+      vOpcion="00"
       echo
       f_msg "${dpNom} - Opcion Incorrecta."
       echo
@@ -344,8 +383,6 @@ while ( test -z "$vOpcion" || true ) do
    vFlgOpcErr="N"
   
   
-
-
    # FECHA DE SESION
 
    if [ "$vOpcion" = "00" ]; then
@@ -444,8 +481,6 @@ while ( test -z "$vOpcion" || true ) do
       fi
 
    fi  # Opcion 01 - Fecha de Proceso
-
-
 
 
    if [ "$vFlgOpcErr" = "S" ]; then

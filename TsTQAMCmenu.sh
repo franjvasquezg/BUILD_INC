@@ -39,7 +39,8 @@ vpFileLOG=""                  # Nombre del Archivo LOG del Programa
 ## Parametros
 ################################################################################
 
-pEntAdq="$1"                  # Entidad Adquirente [BM/BP/TODOS]
+#pEntAdq="$1"                  # Entidad Adquirente [BM/BP/TODOS]
+pMarca="$1"                   # Entidad Adquirente [BM/BP/TODOS]
 pFecProc="$2"                 # Fecha de Proceso [Formato:AAAAMMDD]
 pFecSes="$3"                  # Fecha de Sessión [Formato:AAAAMMDD]
 
@@ -238,21 +239,16 @@ case ${vLong} in
 esac
 }
 
-
-# f_menuCAB () | administra el Archivo de Control (lee/escribe)
-################################################################################
 f_menuCAB ()
 {
 
    clear
    echo "*******************************************************************************"
-   echo "*                       SISTEMA DE GESTION DE COMERCIOS                  ${COD_AMBIENTE} *"
-   if [ "$pEntAdq" = "BM" ]; then
-      echo "*              Incoming de Maestro MasterCard (Banco Mercantil)               *"
-   elif [ "$pEntAdq" = "BP" ]; then
-      echo "*              Incoming de Maestro MasterCard (Banco Provincial)              *"
-   elif [ "$pEntAdq" = "TODOS" ]; then
-      echo "*                   Incoming de Maestro MasterCard (GENERAL)                  *"
+   echo "*                       SISTEMA DE GESTION DE COMERCIOS                 ${COD_AMBIENTE}  *"
+   if [ "$pMarca" = "MC" ]; then
+      echo "*                     Incoming  de  Maestro  Master  Card                     *"
+   elif [ "$pMarca" = "NG" ]; then
+      echo "*                     Incoming  de  Maestro  Naiguata                         *"
    fi
    echo "*******************************************************************************"
 
@@ -270,44 +266,13 @@ f_menuDAT ()
       vRepro="NO"
    fi
 
+   f_fechora ${vFecSes}
+   vFecSesF=${vpValRet}
    f_fechora ${vFecProc}
    vFecProcF=${vpValRet}
-   #echo " Fecha de Proceso: ${vFecProcF}                                   Reproceso: $vRepro"
-   echo " Fecha de Proceso: ${vFecProcF}                                  "
-
+   echo " Fecha de Sesion: ${vFecSesF}                     Fecha de Proceso: ${vFecProcF}"
 }
 
-
-# f_getCTAMC () | codigo de tipo de archivo
-################################################################################
-f_getCTAMC ()
-{
-
-pTipo="$1"
-
-#if [ "${pTipo}" = "TC" ]; then
-#   vpValRet=`echo $COD_TIPOARCHMC | awk '{print substr($0,1,3)}'`
-#elif [ "${pTipo}" = "BINESD" ]; then
-#     vpValRet=`echo $COD_TIPOARCHMC | awk '{print substr($0,4,3)}'`
-#elif [ "${pTipo}" = "BINESE" ]; then
-#     vpValRet=`echo $COD_TIPOARCHMC | awk '{print substr($0,7,3)}'`
-if [ "${pTipo}" = "INCOMING" ]; then
-     vpValRet=`echo $COD_TIPOARCHMC_NGTA | awk '{print substr($0,1,3)}'`
-elif [ "${pTipo}" = "INCRET" ]; then
-     vpValRet=`echo $COD_TIPOARCHMC_NGTA | awk '{print substr($0,4,3)}'`
-elif [ "${pTipo}" = "INCMATCH" ]; then
-     vpValRet=`echo $COD_TIPOARCHMC_NGTA | awk '{print substr($0,7,3)}'`
-elif [ "${pTipo}" = "INCMAESTRONGTA" ]; then
-     vpValRet=`echo $COD_TIPOARCHMC_NGTA | awk '{print substr($0,10,3)}'`
-elif [ "${pTipo}" = "REPCREDMC" ]; then
-     vpValRet=`echo $COD_TIPOARCHMC_NGTA | awk '{print substr($0,13,3)}'`
-elif [ "${pTipo}" = "REPDEBMAESTRO" ]; then
-     vpValRet=`echo $COD_TIPOARCHMC_NGTA | awk '{print substr($0,16,3)}'`
-elif [ "${pTipo}" = "REPDEBMAESTROSW" ]; then
-     vpValRet=`echo $COD_TIPOARCHMC_NGTA | awk '{print substr($0,19,5)}'`
-fi
-
-}
 
 
 # f_menuOPC () | menu de opciones
@@ -315,45 +280,13 @@ fi
 f_menuOPC ()
 {
 
-   #f_getCTAMC BINESD
-   #vpValRet_1=${vpValRet}
-   #f_getCTAMC TC
-   #vpValRet_2=${vpValRet}
-   f_getCTAMC INCOMING
-   vpValRet_3=${vpValRet}
-   f_getCTAMC INCRET
-   vpValRet_4=${vpValRet}
-   f_getCTAMC INCMATCH
-   vpValRet_5=${vpValRet}
-   f_getCTAMC INCMAESTRONGTA
-   vpValRet_6=${vpValRet}
-   #f_getCTAMC BINESE
-   #vpValRet_7=${vpValRet}
-   f_getCTAMC REPCREDMC
-   vpValRet_8=${vpValRet}
-   f_getCTAMC REPDEBMAESTRO
-   vpValRet_9=${vpValRet}
-   f_getCTAMC REPDEBMAESTROSW
-   vpValRet_10=${vpValRet}
-
-   echo "-------------------------------------------------------------------------------"
-   echo "  SELECCIONAR ENTRANTES                           "
-   echo " ----------------------------------------------    "
-
-   echo " [ 1] CREAR INC MC Debito Maestro (TT${vpValRet_6})       "
-   #echo " [ 2] CREAR INC NGTA Debito Maestro (T${vpValRet_6}NA)       "
    echo
-   #echo "                                             CONSULTAS"
-   #echo "                                             ----------------------------------"
-   #echo "                                             [ 7] Log de Procesos"
-   #echo ""
-   #echo "                                             REPROCESO"
-   #echo "                                             ----------------------------------"
-   #echo "                                             [ 8] Reproceso"
+   echo " Seleccione el Adquirente:"
+   echo "------------------------------------------------"
+   echo "   [0105] Banco Mercantil"
+   echo "   [0108] Banco Provincial"
+   echo "   [Q] Cancelar"
    echo
-   echo "-------------------------------------------------------------------------------"
-   echo " Ver $dpVer | Telefonica Servicios Transaccionales                  [Q] Salir"
-   echo "-------------------------------------------------------------------------------"
 
 }
 
@@ -363,22 +296,6 @@ f_menuOPC ()
 ################################################################################
 
 echo
-
-
-## Entidad Adquirente
-################################################################################
-
-if [ "$pEntAdq" = "BM" ]; then
-   vEntidad="BANCO MERCANTIL"
-elif [ "$pEntAdq" = "BP" ]; then
-     vEntidad="BANCO PROVINCIAL"
-elif [ "$pEntAdq" = "TODOS" ]; then
-     vEntidad="GENERAL"
-else
-     f_msg "Codigo de Entidad Incorrecto [BM/BP/TODOS]"
-     f_msg
-     exit 1;
-fi
 
 
 ## Fecha de Proceso
@@ -425,9 +342,6 @@ vOpcRepro="N"
 
 while ( test -z "$vOpcion" || true ) do
 
-   #vFileBINESD="SGCPINCMC${pEntAdq}.BINESD.${vFecProc}"
-   #vFileBINESE="SGCPINCMC${pEntAdq}.BINESE.${vFecProc}"
-   #vFileTC="SGCPINCMC${pEntAdq}.TC.${vFecProc}"
    vFileINCOMING="SGCPINCMC${pEntAdq}.INCOMINGMC.${vFecProc}"
    vFileINCRET="SGCPINCMC${pEntAdq}.INCRET.${vFecProc}"
    vFileINCMATCH="SGCPINCMC${pEntAdq}.INCMATCH.${vFecProc}"
@@ -462,7 +376,7 @@ while ( test -z "$vOpcion" || true ) do
    #  INICIO 
    ###########################################################################################
 
-   if [ "$vOpcion" = "1" ]; then
+   if [ "$vOpcion" = "0105" ]; then
 
       vFlgOpcErr="N"
       vOpcion=""
@@ -470,85 +384,136 @@ while ( test -z "$vOpcion" || true ) do
       # Verifica el Estado del Proceso en el Archivo de Control
       ## Procesos ORACLE
       ################################################################################
-
-      f_fhmsg "Procesando Construccion de Incoming..."
-      #vRet=`ORAExec.sh "exec :rC:=PBUILDINCMC.F_MAIN (TO_DATE('${pFecProc}','YYYYMMDD'),'${pEntAdq}','MC');" $DB`
-      vRet=`ORAExec.sh "exec :rC:=PBUILDINCMC.F_MAIN ('${pFecSes}','${pEntAdq}','MC');" $DB`
-      f_vrfvalret "$?" "Error al ejecutar PBUILDINCMC.F_MAIN. Avisar a Soporte."
-      vEst=`echo $vRet | awk '{print substr($0,1,1)}'`
-      if [ "$vEst" = "0" ]; then
-         vFileOUTMC=`echo "$vRet" | awk '{print substr($0,2,23)}'`
-         f_fhmsg "Archivo Generado: ${vFileOUTMC}"
-         f_fhmsg "Busca en File_Out"
-         sleep 10  
-         #SGCOUTMCconv.sh ${vFileOUTMC}
-         vFileOUTMC=`echo "$vRet" | awk '{print substr($0,25,23)}'`
-         if [ "${vFileOUTMC}" != "" ]; then
-            f_fhmsg "Archivo Generado: ${vFileOUTMC}"
-         #   SGCOUTMCconv.sh ${vFileOUTMC}
-         fi
-      elif [ "$vEst" = "W" ]; then
-         vRet=`echo "$vRet" | awk '{print substr($0,2)}'`
-         f_fhmsg "$vRet"
-      else
-         vRet=`echo "$vRet" | awk '{print substr($0,2)}'`
-         f_finerr "$vRet"
-      fi
-
-   fi # Opcion 1 - INCOMING DEBITO MAESTRO
-
-
-   # OPCION DE LOG DE PROCESOS
-
-   if [ "$vOpcion" = "7" ]; then
+      if [ "$pMarca" = "MC" ]; then  # BUILD Incoming Master Card - MERCANTIL
          vFlgOpcErr="N"
          vOpcion=""
-         trap "trap '' 2" 2
-         SGCPINCMCADQLOGmenu.sh ${pEntAdq} ${vFecProc}
-         trap ""
-   fi # Opcion 7 - LOG de Procesos
+         # Verifica el Estado del Proceso en el Archivo de Control
+         ## Procesos ORACLE
+         ################################################################################
+         f_fhmsg "Procesando Construccion de Incoming..."
+         f_fhmsg "Master Card Mercantil..."
+         vRet=`ORAExec.sh "exec :rC:=PBUILDINCMC.F_MAIN ('${pFecSes}','${pFecProc}','BM','MC');" $DB`
+         f_vrfvalret "$?" "Error al ejecutar PBUILDINCMC.F_MAIN. Avisar a Soporte."
+         vEst=`echo $vRet | awk '{print substr($0,1,1)}'`
+         if [ "$vEst" = "0" ]; then
+            vFileOUTMC=`echo "$vRet" | awk '{print substr($0,2,23)}'`
+            f_fhmsg "Archivo Generado: ${vFileOUTMC}"
+            f_fhmsg "Busca en File_Out"
+            sleep 10  
+            vFileOUTMC=`echo "$vRet" | awk '{print substr($0,25,23)}'`
+            if [ "${vFileOUTMC}" != "" ]; then
+               f_fhmsg "Archivo Generado: ${vFileOUTMC}"
+            fi
+         elif [ "$vEst" = "W" ]; then
+            vRet=`echo "$vRet" | awk '{print substr($0,2)}'`
+            f_fhmsg "$vRet"
+         else
+            vRet=`echo "$vRet" | awk '{print substr($0,2)}'`
+            f_finerr "$vRet"
+         fi
+      fi # Incoming MC - MERCANTIL
+
+   
+      if [ "$pMarca" = "NG" ]; then  # BUILD Incoming Naiguata - MERCANTIL
+         vFlgOpcErr="N"
+         vOpcion=""
+         # Verifica el Estado del Proceso en el Archivo de Control
+         ## Procesos ORACLE
+         ################################################################################
+         f_fhmsg "Procesando Construccion de Incoming..."
+         f_fhmsg "Naiguata Mercantil..."
+         vRet=`ORAExec.sh "exec :rC:=PBUILDINCMC.F_MAIN ('${pFecSes}','${pFecProc}','BM','NGTA');" $DB`
+         f_vrfvalret "$?" "Error al ejecutar PBUILDINCMC.F_MAIN. Avisar a Soporte."
+         vEst=`echo $vRet | awk '{print substr($0,1,1)}'`
+         if [ "$vEst" = "0" ]; then
+            vFileOUTMC=`echo "$vRet" | awk '{print substr($0,2,23)}'`
+            f_fhmsg "Archivo Generado: ${vFileOUTMC}"
+            f_fhmsg "Busca en File_Out"
+            sleep 10  
+            vFileOUTMC=`echo "$vRet" | awk '{print substr($0,25,23)}'`
+            if [ "${vFileOUTMC}" != "" ]; then
+               f_fhmsg "Archivo Generado: ${vFileOUTMC}"
+            fi
+         elif [ "$vEst" = "W" ]; then
+            vRet=`echo "$vRet" | awk '{print substr($0,2)}'`
+            f_fhmsg "$vRet"
+         else
+            vRet=`echo "$vRet" | awk '{print substr($0,2)}'`
+            f_finerr "$vRet"
+         fi
+      fi # Incoming MC - MERCANTIL
+
+   fi # Opcion 1 - INCOMING DEBITO MAESTRO MERCANTIL
 
 
-   # OPCION DE REPROCESO
-
-   if [ "$vOpcion" = "8" ]; then
+   if [ "$vOpcion" = "0108" ]; then
 
       vFlgOpcErr="N"
       vOpcion=""
 
-      echo
-      if [ "$vOpcRepro" = "N" ]; then
-         echo " Desea ACTIVAR la Opcion de Reproceso? (S=Si/N=No/[Enter]=NO) => \c"
-      else
-         echo " Desea DESACTIVAR la Opcion de Reproceso? (S=Si/N=No/[Enter]=NO) => \c"
-      fi
-      read vSelOpcRepro
-
-      if [ "$vSelOpcRepro" = "" ]; then
-         vSelOpcRepro="N"
-      elif [ "$vSelOpcRepro" = "s" ]; then
-           vSelOpcRepro="S"
-      elif [ "$vSelOpcRepro" = "n" ]; then
-           vSelOpcRepro="N"
-      fi
-
-      if [ "$vSelOpcRepro" = "S" ]; then
-           if [ "$vOpcRepro" = "N" ]; then
-              vOpcRepro="S"
-           else
-              vOpcRepro="N"
-           fi
-      else
-         if [ "$vSelOpcRepro" != "N" ]; then
-            echo
-            f_fhmsg "Opcion Incorrecta."
-            echo
-            echo "... presione [ENTER] para continuar."
-            read vContinua
+      # Verifica el Estado del Proceso en el Archivo de Control
+      ## Procesos ORACLE
+      ################################################################################
+      if [ "$pMarca" = "MC" ]; then  # BUILD Incoming Master Card - PROVINCIAL
+         vFlgOpcErr="N"
+         vOpcion=""
+         # Verifica el Estado del Proceso en el Archivo de Control
+         ## Procesos ORACLE
+         ################################################################################
+         f_fhmsg "Procesando Construccion de Incoming..."
+         f_fhmsg "Master Card PROVINCIAL..."
+         vRet=`ORAExec.sh "exec :rC:=PBUILDINCMC.F_MAIN ('${pFecSes}','${pFecProc}','BP','MC');" $DB`
+         f_vrfvalret "$?" "Error al ejecutar PBUILDINCMC.F_MAIN. Avisar a Soporte."
+         vEst=`echo $vRet | awk '{print substr($0,1,1)}'`
+         if [ "$vEst" = "0" ]; then
+            vFileOUTMC=`echo "$vRet" | awk '{print substr($0,2,23)}'`
+            f_fhmsg "Archivo Generado: ${vFileOUTMC}"
+            f_fhmsg "Busca en File_Out"
+            sleep 10  
+            vFileOUTMC=`echo "$vRet" | awk '{print substr($0,25,23)}'`
+            if [ "${vFileOUTMC}" != "" ]; then
+               f_fhmsg "Archivo Generado: ${vFileOUTMC}"
+            fi
+         elif [ "$vEst" = "W" ]; then
+            vRet=`echo "$vRet" | awk '{print substr($0,2)}'`
+            f_fhmsg "$vRet"
+         else
+            vRet=`echo "$vRet" | awk '{print substr($0,2)}'`
+            f_finerr "$vRet"
          fi
-      fi
+      fi # Incoming MC - PROVINCIAL
 
-   fi  # Opcion 8 - Opcion de Reproceso
+   
+      if [ "$pMarca" = "NG" ]; then  # BUILD Incoming Naiguata - PROVINCIAL
+         vFlgOpcErr="N"
+         vOpcion=""
+         # Verifica el Estado del Proceso en el Archivo de Control
+         ## Procesos ORACLE
+         ################################################################################
+         f_fhmsg "Procesando Construccion de Incoming..."
+         f_fhmsg "Naiguata PROVINCIAL..."
+         vRet=`ORAExec.sh "exec :rC:=PBUILDINCMC.F_MAIN ('${pFecSes}','${pFecProc}','BP','NGTA');" $DB`
+         f_vrfvalret "$?" "Error al ejecutar PBUILDINCMC.F_MAIN. Avisar a Soporte."
+         vEst=`echo $vRet | awk '{print substr($0,1,1)}'`
+         if [ "$vEst" = "0" ]; then
+            vFileOUTMC=`echo "$vRet" | awk '{print substr($0,2,23)}'`
+            f_fhmsg "Archivo Generado: ${vFileOUTMC}"
+            f_fhmsg "Busca en File_Out"
+            sleep 10  
+            vFileOUTMC=`echo "$vRet" | awk '{print substr($0,25,23)}'`
+            if [ "${vFileOUTMC}" != "" ]; then
+               f_fhmsg "Archivo Generado: ${vFileOUTMC}"
+            fi
+         elif [ "$vEst" = "W" ]; then
+            vRet=`echo "$vRet" | awk '{print substr($0,2)}'`
+            f_fhmsg "$vRet"
+         else
+            vRet=`echo "$vRet" | awk '{print substr($0,2)}'`
+            f_finerr "$vRet"
+         fi
+      fi # Incoming MC - MERCANTIL
+
+   fi # Opcion 1 - INCOMING DEBITO MAESTRO MERCANTIL
 
 
    if [ "$vFlgOpcErr" = "S" ]; then
