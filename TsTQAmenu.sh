@@ -11,7 +11,7 @@
 ##  Fecha      Autor Version Descripcion de la Modificacion
 ##  ---------- ----- ------- ---------------------------------------------------
 ##  29/06/2020 FJVG  1.00    Codigo Inicial
-
+##  24/07/2020 FJVG  2.00    Generación deportes con fallas 
 ################################################################################
 
 ################################################################################
@@ -24,8 +24,8 @@
 
 dpNom="TsTQAmenu"             # Nombre del Programa
 dpDesc=""                     # Descripcion del Programa
-dpVer=1.00                    # Ultima Version del Programa
-dpFec="20200629"              # Fecha de Ultima Actualizacion [Formato:AAAAMMDD]
+dpVer=2.00                    # Ultima Version del Programa
+dpFec="20200724"              # Fecha de Ultima Actualizacion [Formato:AAAAMMDD]
 
 ## Variables del Programa
 ################################################################################
@@ -330,7 +330,7 @@ while ( test -z "$vOpcion" || true ) do
             vFlgOpcErr="N"
             vOpcion=""
             trap "trap '' 2" 2
-            TsTQAMCmenu.sh MC ${vFecProc} ${vFecSes}
+            TsTQAMCmenu.sh MC ${vFecProc} ${vFecSes} ${vpValRet}
             trap ""
          fi # Incoming MARCA MASTER CARD
 
@@ -338,7 +338,7 @@ while ( test -z "$vOpcion" || true ) do
             vFlgOpcErr="N"
             vOpcion=""
             trap "trap '' 2" 2
-            TsTQAMCmenu.sh NG ${vFecProc} ${vFecSes}
+            TsTQAMCmenu.sh NG ${vFecProc} ${vFecSes} ${vpValRet}
             trap ""
          fi # Incoming MARCA NAIGUATA
 

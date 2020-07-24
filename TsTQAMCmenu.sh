@@ -12,6 +12,7 @@
 ##  Fecha      Autor Version Descripcion de la Modificacion
 ##  ---------- ----- ------- ---------------------------------------------------
 ##  29/06/2020 FJVG   1.00    Codigo Inicial
+##  24/07/2020 FJVG   2.00    Generación deportes con fallas 
 ##
 ################################################################################
 
@@ -25,8 +26,8 @@
 
 dpNom="TsTQAMCmenu"           # Nombre del Programa
 dpDesc=""                     # Descripcion del Programa
-dpVer=1.00                    # Ultima Version del Programa
-dpFec="20200629"              # Fecha de Ultima Actualizacion [Formato:AAAAMMDD]
+dpVer=2.00                    # Ultima Version del Programa
+dpFec="20200724"              # Fecha de Ultima Actualizacion [Formato:AAAAMMDD]
 
 ## Variables del Programa
 ################################################################################
@@ -39,10 +40,10 @@ vpFileLOG=""                  # Nombre del Archivo LOG del Programa
 ## Parametros
 ################################################################################
 
-#pEntAdq="$1"                  # Entidad Adquirente [BM/BP/TODOS]
-pMarca="$1"                   # Entidad Adquirente [BM/BP/TODOS]
-pFecProc="$2"                 # Fecha de Proceso [Formato:AAAAMMDD]
-pFecSes="$3"                  # Fecha de Sessión [Formato:AAAAMMDD]
+pMarca="$1"                    # Marca [MC/NG]
+pFecProc="$2"                  # Fecha de Proceso [Formato:AAAAMMDD]
+pFecSes="$3"                   # Fecha de Sessión [Formato:AAAAMMDD]
+Report="$4"                    # Código de los Repostes [058|167|168|120|121|655|470|150|467]
 
 
 ## Variables de Trabajo
@@ -278,18 +279,26 @@ f_menuDAT ()
 # f_menuOPC () | menu de opciones
 ################################################################################
 f_menuOPC ()
-{
-
-   echo
-   echo " Seleccione el Adquirente:"
-   echo "------------------------------------------------"
-   echo "   [0105] Banco Mercantil"
-   echo "   [0108] Banco Provincial"
-   echo "   [Q] Cancelar"
-   echo
+         echo "-------------------------------------------------------------------------------"
+         echo "  ENTRANTE SELECCIONADO                                     TIPO REPORTE"
+         echo " ----------------------------------------------      --------------------------"
+         echo "                                                         OK [00]   FALLAS [01] " 
+         if [ "${Report}" = "470" ]; then  
+            echo " [ X] CREAR INC MC Debito Maestro (TT${Report})                                "
+         elif [ "${Report}" = "461" ]; then
+            echo "prueba reporte 461" 
+         else
+            echo "prueba reporte ultima opción" 
+         fi
+         echo
+         echo
+         echo "-------------------------------------------------------------------------------"
+         echo " Ver $dpVer | Telefonica Servicios Transaccionales                  [Q] Salir"
+         echo "-------------------------------------------------------------------------------"
+         echo
+         echo "   Seleccione Opcion => \c"
 
 }
-
 
 ################################################################################
 ## INICIO | PROCEDIMIENTO PRINCIPAL
@@ -342,13 +351,6 @@ vOpcRepro="N"
 
 while ( test -z "$vOpcion" || true ) do
 
-   vFileINCOMING="SGCPINCMC${pEntAdq}.INCOMINGMC.${vFecProc}"
-   vFileINCRET="SGCPINCMC${pEntAdq}.INCRET.${vFecProc}"
-   vFileINCMATCH="SGCPINCMC${pEntAdq}.INCMATCH.${vFecProc}"
-   vFileINCMAESTRO="SGCPINCMC${pEntAdq}.INCMAESTRONGTA.${vFecProc}"
-   vFileREPCREDMC="SGCPINCMC${pEntAdq}.REPCREDMC.${vFecProc}"
-   vFileREPDEBMAESTRO="SGCPINCMC${pEntAdq}.REPDEBMAESTRO.${vFecProc}"
-
    f_menuCAB
    f_menuDAT
    f_menuOPC
@@ -376,144 +378,21 @@ while ( test -z "$vOpcion" || true ) do
    #  INICIO 
    ###########################################################################################
 
-   if [ "$vOpcion" = "0105" ]; then
+  if [ "$vOpcADQ" = "00" ]; then  # Incoming MARCA MASTER CARD
+            vFlgOpcErr="N"
+            vOpcion=""
+            trap "trap '' 2" 2
+            TsTQAMCppkg.sh MC ${vFecProc} ${vFecSes} N   # N= sin fallas registros FREC Y EREC
+            trap ""
+   fi # Incoming MARCA MASTER CARD
 
-      vFlgOpcErr="N"
-      vOpcion=""
-
-      # Verifica el Estado del Proceso en el Archivo de Control
-      ## Procesos ORACLE
-      ################################################################################
-      if [ "$pMarca" = "MC" ]; then  # BUILD Incoming Master Card - MERCANTIL
-         vFlgOpcErr="N"
-         vOpcion=""
-         # Verifica el Estado del Proceso en el Archivo de Control
-         ## Procesos ORACLE
-         ################################################################################
-         f_fhmsg "Procesando Construccion de Incoming..."
-         f_fhmsg "Master Card Mercantil..."
-         vRet=`ORAExec.sh "exec :rC:=PBUILDINCMC.F_MAIN ('${pFecSes}','${pFecProc}','BM','MC');" $DB`
-         f_vrfvalret "$?" "Error al ejecutar PBUILDINCMC.F_MAIN. Avisar a Soporte."
-         vEst=`echo $vRet | awk '{print substr($0,1,1)}'`
-         if [ "$vEst" = "0" ]; then
-            vFileOUTMC=`echo "$vRet" | awk '{print substr($0,2,23)}'`
-            f_fhmsg "Archivo Generado: ${vFileOUTMC}"
-            f_fhmsg "Busca en File_Out"
-            sleep 10  
-            vFileOUTMC=`echo "$vRet" | awk '{print substr($0,25,23)}'`
-            if [ "${vFileOUTMC}" != "" ]; then
-               f_fhmsg "Archivo Generado: ${vFileOUTMC}"
-            fi
-         elif [ "$vEst" = "W" ]; then
-            vRet=`echo "$vRet" | awk '{print substr($0,2)}'`
-            f_fhmsg "$vRet"
-         else
-            vRet=`echo "$vRet" | awk '{print substr($0,2)}'`
-            f_finerr "$vRet"
-         fi
-      fi # Incoming MC - MERCANTIL
-
-   
-      if [ "$pMarca" = "NG" ]; then  # BUILD Incoming Naiguata - MERCANTIL
-         vFlgOpcErr="N"
-         vOpcion=""
-         # Verifica el Estado del Proceso en el Archivo de Control
-         ## Procesos ORACLE
-         ################################################################################
-         f_fhmsg "Procesando Construccion de Incoming..."
-         f_fhmsg "Naiguata Mercantil..."
-         vRet=`ORAExec.sh "exec :rC:=PBUILDINCMC.F_MAIN ('${pFecSes}','${pFecProc}','BM','NGTA');" $DB`
-         f_vrfvalret "$?" "Error al ejecutar PBUILDINCMC.F_MAIN. Avisar a Soporte."
-         vEst=`echo $vRet | awk '{print substr($0,1,1)}'`
-         if [ "$vEst" = "0" ]; then
-            vFileOUTMC=`echo "$vRet" | awk '{print substr($0,2,23)}'`
-            f_fhmsg "Archivo Generado: ${vFileOUTMC}"
-            f_fhmsg "Busca en File_Out"
-            sleep 10  
-            vFileOUTMC=`echo "$vRet" | awk '{print substr($0,25,23)}'`
-            if [ "${vFileOUTMC}" != "" ]; then
-               f_fhmsg "Archivo Generado: ${vFileOUTMC}"
-            fi
-         elif [ "$vEst" = "W" ]; then
-            vRet=`echo "$vRet" | awk '{print substr($0,2)}'`
-            f_fhmsg "$vRet"
-         else
-            vRet=`echo "$vRet" | awk '{print substr($0,2)}'`
-            f_finerr "$vRet"
-         fi
-      fi # Incoming MC - MERCANTIL
-
-   fi # Opcion 1 - INCOMING DEBITO MAESTRO MERCANTIL
-
-
-   if [ "$vOpcion" = "0108" ]; then
-
-      vFlgOpcErr="N"
-      vOpcion=""
-
-      # Verifica el Estado del Proceso en el Archivo de Control
-      ## Procesos ORACLE
-      ################################################################################
-      if [ "$pMarca" = "MC" ]; then  # BUILD Incoming Master Card - PROVINCIAL
-         vFlgOpcErr="N"
-         vOpcion=""
-         # Verifica el Estado del Proceso en el Archivo de Control
-         ## Procesos ORACLE
-         ################################################################################
-         f_fhmsg "Procesando Construccion de Incoming..."
-         f_fhmsg "Master Card PROVINCIAL..."
-         vRet=`ORAExec.sh "exec :rC:=PBUILDINCMC.F_MAIN ('${pFecSes}','${pFecProc}','BP','MC');" $DB`
-         f_vrfvalret "$?" "Error al ejecutar PBUILDINCMC.F_MAIN. Avisar a Soporte."
-         vEst=`echo $vRet | awk '{print substr($0,1,1)}'`
-         if [ "$vEst" = "0" ]; then
-            vFileOUTMC=`echo "$vRet" | awk '{print substr($0,2,23)}'`
-            f_fhmsg "Archivo Generado: ${vFileOUTMC}"
-            f_fhmsg "Busca en File_Out"
-            sleep 10  
-            vFileOUTMC=`echo "$vRet" | awk '{print substr($0,25,23)}'`
-            if [ "${vFileOUTMC}" != "" ]; then
-               f_fhmsg "Archivo Generado: ${vFileOUTMC}"
-            fi
-         elif [ "$vEst" = "W" ]; then
-            vRet=`echo "$vRet" | awk '{print substr($0,2)}'`
-            f_fhmsg "$vRet"
-         else
-            vRet=`echo "$vRet" | awk '{print substr($0,2)}'`
-            f_finerr "$vRet"
-         fi
-      fi # Incoming MC - PROVINCIAL
-
-   
-      if [ "$pMarca" = "NG" ]; then  # BUILD Incoming Naiguata - PROVINCIAL
-         vFlgOpcErr="N"
-         vOpcion=""
-         # Verifica el Estado del Proceso en el Archivo de Control
-         ## Procesos ORACLE
-         ################################################################################
-         f_fhmsg "Procesando Construccion de Incoming..."
-         f_fhmsg "Naiguata PROVINCIAL..."
-         vRet=`ORAExec.sh "exec :rC:=PBUILDINCMC.F_MAIN ('${pFecSes}','${pFecProc}','BP','NGTA');" $DB`
-         f_vrfvalret "$?" "Error al ejecutar PBUILDINCMC.F_MAIN. Avisar a Soporte."
-         vEst=`echo $vRet | awk '{print substr($0,1,1)}'`
-         if [ "$vEst" = "0" ]; then
-            vFileOUTMC=`echo "$vRet" | awk '{print substr($0,2,23)}'`
-            f_fhmsg "Archivo Generado: ${vFileOUTMC}"
-            f_fhmsg "Busca en File_Out"
-            sleep 10  
-            vFileOUTMC=`echo "$vRet" | awk '{print substr($0,25,23)}'`
-            if [ "${vFileOUTMC}" != "" ]; then
-               f_fhmsg "Archivo Generado: ${vFileOUTMC}"
-            fi
-         elif [ "$vEst" = "W" ]; then
-            vRet=`echo "$vRet" | awk '{print substr($0,2)}'`
-            f_fhmsg "$vRet"
-         else
-            vRet=`echo "$vRet" | awk '{print substr($0,2)}'`
-            f_finerr "$vRet"
-         fi
-      fi # Incoming MC - MERCANTIL
-
-   fi # Opcion 1 - INCOMING DEBITO MAESTRO MERCANTIL
+   if [ "$vOpcADQ" = "01" ]; then  # Incoming MARCA NAIGUATA
+            vFlgOpcErr="N"
+            vOpcion=""
+            trap "trap '' 2" 2
+            TsTQAMCppkg.sh NG ${vFecProc} ${vFecSes} S   # S= Con fallas registros FREC Y NREC
+            trap ""
+   fi # Incoming MARCA NAIGUATA
 
 
    if [ "$vFlgOpcErr" = "S" ]; then
