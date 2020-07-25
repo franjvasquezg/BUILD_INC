@@ -279,25 +279,27 @@ f_menuDAT ()
 # f_menuOPC () | menu de opciones
 ################################################################################
 f_menuOPC ()
+{
          echo "-------------------------------------------------------------------------------"
-         echo "  ENTRANTE SELECCIONADO                                     TIPO REPORTE"
-         echo " ----------------------------------------------      --------------------------"
-         echo "                                                         OK [00]   FALLAS [01] " 
+         echo "  ENTRANTE SELECCIONADO                                                        "
+         echo " ----------------------------------------------                                "
+         echo "                                                                               " 
          if [ "${Report}" = "470" ]; then  
-            echo " [ X] CREAR INC MC Debito Maestro (TT${Report})                                "
+            echo " [ X] CREAR INC MC Debito Maestro (TT${Report})                             "
          elif [ "${Report}" = "461" ]; then
             echo "prueba reporte 461" 
          else
             echo "prueba reporte ultima opción" 
          fi
-         echo
-         echo
+         echo "                                                                               " 
+         echo "-------------------------------------------------------------------------------"
+         echo "  CONDICION DATOS DEL ENTRANTE     "
+         echo "      OK [00]   FALLAS [01] " 
+         echo "                                                                               " 
+         echo "                                                                               " 
          echo "-------------------------------------------------------------------------------"
          echo " Ver $dpVer | Telefonica Servicios Transaccionales                  [Q] Salir"
          echo "-------------------------------------------------------------------------------"
-         echo
-         echo "   Seleccione Opcion => \c"
-
 }
 
 ################################################################################
@@ -351,6 +353,7 @@ vOpcRepro="N"
 
 while ( test -z "$vOpcion" || true ) do
 
+   clear
    f_menuCAB
    f_menuDAT
    f_menuOPC
@@ -373,25 +376,27 @@ while ( test -z "$vOpcion" || true ) do
    fi
 
 
-   # CONSTRUCCION DE ENTRANTES MAESTRO
+   # SELECCIÓN DE CONTENIDO DE LOS DATOS SI TRAERA O NO TRAERA FALLAS
    ###########################################################################################
    #  INICIO 
    ###########################################################################################
 
-  if [ "$vOpcADQ" = "00" ]; then  # Incoming MARCA MASTER CARD
+  if [ "$vOpcion" = "00" ]; then  # Incoming MARCA MASTER CARD
             vFlgOpcErr="N"
             vOpcion=""
             trap "trap '' 2" 2
-            TsTQAMCppkg.sh MC ${vFecProc} ${vFecSes} N   # N= sin fallas registros FREC Y EREC
+            #TsTQAMCppkg.sh MC ${vFecProc} ${vFecSes} N   # N= sin fallas registros FREC Y EREC
+            echo "hola 100"
             trap ""
    fi # Incoming MARCA MASTER CARD
 
-   if [ "$vOpcADQ" = "01" ]; then  # Incoming MARCA NAIGUATA
+   if [ "$vOpcion" = "01" ]; then  # Incoming MARCA NAIGUATA
             vFlgOpcErr="N"
             vOpcion=""
             trap "trap '' 2" 2
-            TsTQAMCppkg.sh NG ${vFecProc} ${vFecSes} S   # S= Con fallas registros FREC Y NREC
-            trap ""
+            #TsTQAMCppkg.sh NG ${vFecProc} ${vFecSes} S   # S= Con fallas registros FREC Y NREC
+            echo "hola 101"
+            trap ""   
    fi # Incoming MARCA NAIGUATA
 
 

@@ -132,9 +132,34 @@ case ${vLong} in
 esac
 }
 
-# f_getCTAMC () | codigo de tipo de archivo
+# f_getCTAMC () | codigo de tipo de archivo Master Card
+# COD_TIPOARCHMC="058167168120121655470150467"
 ################################################################################
 f_getCTAMC ()
+{
+
+pTipo="$1"
+
+if [ "${pTipo}" = "INCOMING" ]; then
+     vpValRet=`echo $COD_TIPOARCHMC | awk '{print substr($0,10,3)}'`
+elif [ "${pTipo}" = "INCRET" ]; then
+     vpValRet=`echo $COD_TIPOARCHMC | awk '{print substr($0,13,3)}'`
+elif [ "${pTipo}" = "INCMATCH" ]; then
+     vpValRet=`echo $COD_TIPOARCHMC | awk '{print substr($0,16,3)}'`
+elif [ "${pTipo}" = "INCMAESTRO" ]; then
+     vpValRet=`echo $COD_TIPOARCHMC | awk '{print substr($0,19,3)}'`
+elif [ "${pTipo}" = "REPCREDMC" ]; then
+     vpValRet=`echo $COD_TIPOARCHMC | awk '{print substr($0,22,3)}'`
+elif [ "${pTipo}" = "REPDEBMAESTRO" ]; then
+     vpValRet=`echo $COD_TIPOARCHMC | awk '{print substr($0,25,3)}'`
+fi
+
+}
+
+# f_getCTAMC () | codigo de tipo de archivo Master Naiguata
+# COD_TIPOARCHMC_NGTA="112113655464140461SWCHD"
+################################################################################
+f_getCTAMC_NGTA ()
 {
 
 pTipo="$1"
@@ -284,25 +309,26 @@ while ( test -z "$vOpcion" || true ) do
          
       clear   #limpia la pantalla para visualizar mejor el menu ip1302 fjvg
       f_menuCAB
+      f_menuDAT
       vFlgOpcErr="N"
       vOpcion=""
       ############################################################
+      ### CODIGOS REPORTES MASTER CARD ###########################
          f_getCTAMC INCOMING
          vpValRet_3=${vpValRet}
          f_getCTAMC INCRET
          vpValRet_4=${vpValRet}
          f_getCTAMC INCMATCH
          vpValRet_5=${vpValRet}
-         f_getCTAMC INCMAESTRONGTA
+         f_getCTAMC INCMAESTRO
          vpValRet_6=${vpValRet}
          f_getCTAMC REPCREDMC
          vpValRet_8=${vpValRet}
          f_getCTAMC REPDEBMAESTRO
          vpValRet_9=${vpValRet}
-         f_getCTAMC REPDEBMAESTROSW
-         vpValRet_10=${vpValRet}
-
+      ############################################################
          echo "-------------------------------------------------------------------------------"
+         echo
          echo "  SELECCIONAR ENTRANTES                           "
          echo " ----------------------------------------------    "
 
@@ -330,7 +356,7 @@ while ( test -z "$vOpcion" || true ) do
             vFlgOpcErr="N"
             vOpcion=""
             trap "trap '' 2" 2
-            TsTQAMCmenu.sh MC ${vFecProc} ${vFecSes} ${vpValRet}
+            TsTQAMCmenu.sh MC ${vFecProc} ${vFecSes} ${vpValRet_6}
             trap ""
          fi # Incoming MARCA MASTER CARD
 
@@ -364,6 +390,7 @@ while ( test -z "$vOpcion" || true ) do
 
          clear   #limpia la pantalla para visualizarmejor el menu ip1302 fjvg
          f_menuCAB
+         f_menuDAT
          vFlgOpcErr="N"
          vOpcion=""
          
