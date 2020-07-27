@@ -2,16 +2,17 @@
 
 ################################################################################
 ##
-##  Nombre del Programa : TsTQAmenu.sh
+##  Nombre del Programa : PBUILD_INCmenu
 ##                Autor : FJVG
 ##       Codigo Inicial : 29/06/2020
-##          Descripcion : Menu de Herramientas de TST QA 
+##          Descripcion : Menu del Proceso de CONSTRUCION Incoming
+##
 ##  ======================== Registro de Modificaciones ========================
 ##
 ##  Fecha      Autor Version Descripcion de la Modificacion
 ##  ---------- ----- ------- ---------------------------------------------------
 ##  29/06/2020 FJVG  1.00    Codigo Inicial
-##  24/07/2020 FJVG  2.00    Generación deportes con fallas 
+
 ################################################################################
 
 ################################################################################
@@ -22,10 +23,10 @@
 ## Datos del Programa
 ################################################################################
 
-dpNom="TsTQAmenu"             # Nombre del Programa
+dpNom="PBUILD_INCmenu"        # Nombre del Programa
 dpDesc=""                     # Descripcion del Programa
-dpVer=2.00                    # Ultima Version del Programa
-dpFec="20200724"              # Fecha de Ultima Actualizacion [Formato:AAAAMMDD]
+dpVer=1.00                    # Ultima Version del Programa
+dpFec="20200629"              # Fecha de Ultima Actualizacion [Formato:AAAAMMDD]
 
 ## Variables del Programa
 ################################################################################
@@ -132,56 +133,6 @@ case ${vLong} in
 esac
 }
 
-# f_getCTAMC () | codigo de tipo de archivo Master Card
-# COD_TIPOARCHMC="058167168120121655470150467"
-################################################################################
-f_getCTAMC ()
-{
-
-pTipo="$1"
-
-if [ "${pTipo}" = "INCOMING" ]; then
-     vpValRet=`echo $COD_TIPOARCHMC | awk '{print substr($0,10,3)}'`
-elif [ "${pTipo}" = "INCRET" ]; then
-     vpValRet=`echo $COD_TIPOARCHMC | awk '{print substr($0,13,3)}'`
-elif [ "${pTipo}" = "INCMATCH" ]; then
-     vpValRet=`echo $COD_TIPOARCHMC | awk '{print substr($0,16,3)}'`
-elif [ "${pTipo}" = "INCMAESTRO" ]; then
-     vpValRet=`echo $COD_TIPOARCHMC | awk '{print substr($0,19,3)}'`
-elif [ "${pTipo}" = "REPCREDMC" ]; then
-     vpValRet=`echo $COD_TIPOARCHMC | awk '{print substr($0,22,3)}'`
-elif [ "${pTipo}" = "REPDEBMAESTRO" ]; then
-     vpValRet=`echo $COD_TIPOARCHMC | awk '{print substr($0,25,3)}'`
-fi
-
-}
-
-# f_getCTAMC () | codigo de tipo de archivo Master Naiguata
-# COD_TIPOARCHMC_NGTA="112113655464140461SWCHD"
-################################################################################
-f_getCTAMC_NGTA ()
-{
-
-pTipo="$1"
-
-if [ "${pTipo}" = "INCOMING" ]; then
-     vpValRet=`echo $COD_TIPOARCHMC_NGTA | awk '{print substr($0,1,3)}'`
-elif [ "${pTipo}" = "INCRET" ]; then
-     vpValRet=`echo $COD_TIPOARCHMC_NGTA | awk '{print substr($0,4,3)}'`
-elif [ "${pTipo}" = "INCMATCH" ]; then
-     vpValRet=`echo $COD_TIPOARCHMC_NGTA | awk '{print substr($0,7,3)}'`
-elif [ "${pTipo}" = "INCMAESTRONGTA" ]; then
-     vpValRet=`echo $COD_TIPOARCHMC_NGTA | awk '{print substr($0,10,3)}'`
-elif [ "${pTipo}" = "REPCREDMC" ]; then
-     vpValRet=`echo $COD_TIPOARCHMC_NGTA | awk '{print substr($0,13,3)}'`
-elif [ "${pTipo}" = "REPDEBMAESTRO" ]; then
-     vpValRet=`echo $COD_TIPOARCHMC_NGTA | awk '{print substr($0,16,3)}'`
-elif [ "${pTipo}" = "REPDEBMAESTROSW" ]; then
-     vpValRet=`echo $COD_TIPOARCHMC_NGTA | awk '{print substr($0,19,5)}'`
-fi
-
-}
-
 
 # f_menuCAB () | Encabezado Menu Principal
 ################################################################################
@@ -190,8 +141,8 @@ f_menuCAB ()
 
    clear
    echo "*******************************************************************************"
-   echo "*                       SISTEMA DE GESTION DE COMERCIOS                 ${COD_AMBIENTE}  *"
-   echo "*                  MENU PRINCIPAL DE HERRAMIENTAS QA DE TST                   *"
+   echo "*                       SISTEMA DE GESTION DE COMERCIOS       ${COD_AMBIENTE} *"
+   echo "*              Menu Principal del Proceso de Construción de Incoming          *"
    echo "*******************************************************************************"
 
 }
@@ -206,7 +157,7 @@ f_menuDAT ()
    vFecSesF=${vpValRet}
    f_fechora ${vFecProc}
    vFecProcF=${vpValRet}
-   echo " Fecha de Sesion: ${vFecSesF}                     Fecha de Proceso: ${vFecProcF}"
+   echo " Fecha de Sesion: ${vFecSesF}    Reproceso: ${vOpcRepro}     Fecha de Proceso: ${vFecProcF}"
 
 }
 
@@ -220,8 +171,8 @@ f_menuOPC ()
    echo
    echo "   PROCESOS                                 CONFIGURACION"
    echo "  -------------------------------------    ----------------------------------"
-   echo "   [ 1] Construir Incoming de MC             [00]  Fecha de Sesion"
-   echo "                                             [01]  Fecha de Proceso"
+   echo "   [ 1] Constiur Incoming de Visa            [ 6]  Fecha de Sesion"
+   echo "   [ 2] Constiur Incoming de MC              [ 7]  Fecha de Proceso"
    echo "  "
    echo "-------------------------------------------------------------------------------"
    echo " Ver $dpVer | Telefonica Servicios Transaccionales                     [Q] Salir"
@@ -282,7 +233,7 @@ while ( test -z "$vOpcion" || true ) do
 
    f_menuCAB
    f_menuDAT
-   f_menuOPC 
+   f_menuOPC
 
    if [ "${vOpcion}" = "" ]; then
       echo
@@ -302,42 +253,38 @@ while ( test -z "$vOpcion" || true ) do
    fi
 
 
-   # INCOMING DE MASTER CARD 
 
-   if [ "$vOpcion" = "1" ]; then   # construccion Incoming de Maestro MasterCard
+   # INCOMING DE VISA
+
+   if [ "$vOpcion" = "1" ]; then
+
+         clear   #limpia la pantalla para visualizarmejor el menu ip1302 fjvg
+         f_menuCAB
+         vFlgOpcErr="N"
+         vOpcion=""
+         
+         echo "    [xx]  Incoming de Visa NAIGUATA <<<EN CONTRUCCION>>>"
+         trap ""   
+   fi # Opcion 1 - Incoming Niguata VISA
+
+   # INCOMING DE VISA
+
+   if [ "$vOpcion" = "2" ]; then   # contrución Incoming de MasterCard  NAIGUATA
 
          
       clear   #limpia la pantalla para visualizar mejor el menu ip1302 fjvg
       f_menuCAB
-      f_menuDAT
       vFlgOpcErr="N"
       vOpcion=""
       ############################################################
-      ### CODIGOS REPORTES MASTER CARD ###########################
-         f_getCTAMC INCOMING
-         vpValRet_3=${vpValRet}
-         f_getCTAMC INCRET
-         vpValRet_4=${vpValRet}
-         f_getCTAMC INCMATCH
-         vpValRet_5=${vpValRet}
-         f_getCTAMC INCMAESTRO
-         vpValRet_6=${vpValRet}
-         f_getCTAMC REPCREDMC
-         vpValRet_8=${vpValRet}
-         f_getCTAMC REPDEBMAESTRO
-         vpValRet_9=${vpValRet}
-      ############################################################
-         echo "-------------------------------------------------------------------------------"
-         echo
-         echo "  SELECCIONAR ENTRANTES                           "
-         echo " ----------------------------------------------    "
+      # INCOMING DE MASTERCARD
 
-         echo " [ 1] CREAR INC MC Debito Maestro (TT${vpValRet_6})       "
          echo
-         echo
-         echo "-------------------------------------------------------------------------------"
-         echo " Ver $dpVer | Telefonica Servicios Transaccionales                  [Q] Salir"
-         echo "-------------------------------------------------------------------------------"
+         echo " INCOMING DE NAIGUATA MASTERCARD | Seleccione el Adquirente:"
+         echo "------------------------------------------------------------"
+         echo "   [0105] Banco Mercantil"
+         echo "   [0108] Banco Provincial"
+         echo "   [Q] Cancelar"
          echo
          echo "   Seleccione Opcion => \c"
          read vOpcADQ
@@ -348,29 +295,28 @@ while ( test -z "$vOpcion" || true ) do
          fi
 
          if [ "$vOpcADQ" = "" ]; then
-            vOpcion="00"
+            vOpcion="6"
             vFlgOpcErr="N"
          fi
 
-         if [ "$vOpcADQ" = "1" ]; then  # Incoming MARCA MASTER CARD
+         if [ "$vOpcADQ" = "0105" ]; then  # BUILD Incoming MC - MERCANTIL
             vFlgOpcErr="N"
             vOpcion=""
             trap "trap '' 2" 2
-            TsTQAMCmenu.sh MC ${vFecProc} ${vFecSes} ${vpValRet_6}
+            PBUILD_INCMCmenu.sh BM ${vFecProc} ${vFecSes}
             trap ""
-         fi # Incoming MARCA MASTER CARD
+         fi # Incoming MC - MERCANTIL
 
-         if [ "$vOpcADQ" = "2" ]; then  # Incoming MARCA NAIGUATA
+         if [ "$vOpcADQ" = "0108" ]; then  # BUILD Incoming MC - PROVINCIAL
             vFlgOpcErr="N"
             vOpcion=""
             trap "trap '' 2" 2
-            TsTQAMCmenu.sh NG ${vFecProc} ${vFecSes} ${vpValRet}
+            PBUILD_INCMCmenu.sh BP ${vFecProc} ${vFecSes}
             trap ""
-         fi # Incoming MARCA NAIGUATA
-
+         fi # Incoming MC - PROVINCIAL
 
          if [ "$vFlgOpcErr" = "S" ]; then
-            vOpcion="00"
+            vOpcion="6"
             echo
             f_msg "${dpNom} - Opcion Incorrecta."
             echo
@@ -382,24 +328,11 @@ while ( test -z "$vOpcion" || true ) do
 
       ############################################################
 
-   fi # Incoming de Maestro MasterCard
+   fi # Incoming de MasterCard  NAIGUATA
 
-   # INCOMING DE VISA
-
-   if [ "$vOpcion" = "2" ]; then
-
-         clear   #limpia la pantalla para visualizarmejor el menu ip1302 fjvg
-         f_menuCAB
-         f_menuDAT
-         vFlgOpcErr="N"
-         vOpcion=""
-         
-         echo "    [xx]  Incoming de Visa NAIGUATA <<<EN CONTRUCCION>>>"
-         trap ""   
-   fi # Opcion 2 - Incoming Naiguata VISA
    
    if [ "$vFlgOpcErr" = "S" ]; then
-      vOpcion="00"
+      vOpcion="6"
       echo
       f_msg "${dpNom} - Opcion Incorrecta."
       echo
@@ -410,9 +343,11 @@ while ( test -z "$vOpcion" || true ) do
    vFlgOpcErr="N"
   
   
+
+
    # FECHA DE SESION
 
-   if [ "$vOpcion" = "00" ]; then
+   if [ "$vOpcion" = "6" ]; then
 
       vFlgOpcErr="N"
       vOpcion=""
@@ -457,12 +392,12 @@ while ( test -z "$vOpcion" || true ) do
          fi
       fi
 
-   fi  # Opcion 00 - Fecha de Sesion
+   fi  # Opcion 6 - Fecha de Sesion
 
 
    # FECHA DE PROCESO
 
-   if [ "$vOpcion" = "01" ]; then
+   if [ "$vOpcion" = "7" ]; then
 
       vFlgOpcErr="N"
       vOpcion=""
@@ -507,7 +442,11 @@ while ( test -z "$vOpcion" || true ) do
          fi
       fi
 
-   fi  # Opcion 01 - Fecha de Proceso
+   fi  # Opcion 7 - Fecha de Proceso
+
+
+
+
 
 
    if [ "$vFlgOpcErr" = "S" ]; then

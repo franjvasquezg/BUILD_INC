@@ -2,17 +2,16 @@
 
 ################################################################################
 ##
-##  Nombre del Programa : TsTQAMCmenu.sh
+##  Nombre del Programa : PBUILD_INCMCmenu.sh
 ##                Autor : FJVG
 ##       Codigo Inicial : 29/06/2020
-##          Descripcion : Menu de Construccion de Incoming de MasterCard 
+##          Descripcion : Menu de Incoming de MasterCard
 ##
 ##  ======================== Registro de Modificaciones ========================
 ##
 ##  Fecha      Autor Version Descripcion de la Modificacion
 ##  ---------- ----- ------- ---------------------------------------------------
 ##  29/06/2020 FJVG   1.00    Codigo Inicial
-##  24/07/2020 FJVG   2.00    Generación deportes con fallas 
 ##
 ################################################################################
 
@@ -24,10 +23,10 @@
 ## Datos del Programa
 ################################################################################
 
-dpNom="TsTQAMCmenu"           # Nombre del Programa
+dpNom="PBUILD_INCMCmenu"      # Nombre del Programa
 dpDesc=""                     # Descripcion del Programa
-dpVer=2.00                    # Ultima Version del Programa
-dpFec="20200724"              # Fecha de Ultima Actualizacion [Formato:AAAAMMDD]
+dpVer=1.00                    # Ultima Version del Programa
+dpFec="20200629"              # Fecha de Ultima Actualizacion [Formato:AAAAMMDD]
 
 ## Variables del Programa
 ################################################################################
@@ -40,10 +39,9 @@ vpFileLOG=""                  # Nombre del Archivo LOG del Programa
 ## Parametros
 ################################################################################
 
-pMarca="$1"                    # Marca [MC/NG]
-pFecProc="$2"                  # Fecha de Proceso [Formato:AAAAMMDD]
-pFecSes="$3"                   # Fecha de Sessión [Formato:AAAAMMDD]
-Report="$4"                    # Código de los Repostes [058|167|168|120|121|655|470|150|467]
+pEntAdq="$1"                  # Entidad Adquirente [BM/BP/TODOS]
+pFecProc="$2"                 # Fecha de Proceso [Formato:AAAAMMDD]
+pFecSes="$3"                  # Fecha de Sessión [Formato:AAAAMMDD]
 
 
 ## Variables de Trabajo
@@ -83,7 +81,6 @@ else
    fi
 fi
 }
-
 
 # f_vrfvalret | verifica valor de retorno, fin error si el valor es 1
 # Parametros
@@ -240,16 +237,21 @@ case ${vLong} in
 esac
 }
 
+
+# f_menuCAB () | administra el Archivo de Control (lee/escribe)
+################################################################################
 f_menuCAB ()
 {
 
    clear
    echo "*******************************************************************************"
-   echo "*                       SISTEMA DE GESTION DE COMERCIOS                 ${COD_AMBIENTE}  *"
-   if [ "$pMarca" = "MC" ]; then
-      echo "*                     Incoming  de  Maestro  Master  Card                     *"
-   elif [ "$pMarca" = "NG" ]; then
-      echo "*                     Incoming  de  Maestro  Naiguata                         *"
+   echo "*                       SISTEMA DE GESTION DE COMERCIOS                  ${COD_AMBIENTE} *"
+   if [ "$pEntAdq" = "BM" ]; then
+      echo "*         Incoming de Naiguata MasterCard (Banco Mercantil)                   *"
+   elif [ "$pEntAdq" = "BP" ]; then
+        echo "*         Incoming de Naiguata MasterCard (Banco Provincial)                  *"
+   elif [ "$pEntAdq" = "TODOS" ]; then
+        echo "*         Incoming de Naiguata MasterCard (GENERAL)                           *"
    fi
    echo "*******************************************************************************"
 
@@ -267,13 +269,43 @@ f_menuDAT ()
       vRepro="NO"
    fi
 
-   f_fechora ${vFecSes}
-   vFecSesF=${vpValRet}
    f_fechora ${vFecProc}
    vFecProcF=${vpValRet}
-   echo " Fecha de Sesion: ${vFecSesF}                     Fecha de Proceso: ${vFecProcF}"
+   echo " Fecha de Proceso: ${vFecProcF}                                   Reproceso: $vRepro"
+
 }
 
+
+# f_getCTAMC () | codigo de tipo de archivo
+################################################################################
+f_getCTAMC ()
+{
+
+pTipo="$1"
+
+#if [ "${pTipo}" = "TC" ]; then
+#   vpValRet=`echo $COD_TIPOARCHMC | awk '{print substr($0,1,3)}'`
+#elif [ "${pTipo}" = "BINESD" ]; then
+#     vpValRet=`echo $COD_TIPOARCHMC | awk '{print substr($0,4,3)}'`
+#elif [ "${pTipo}" = "BINESE" ]; then
+#     vpValRet=`echo $COD_TIPOARCHMC | awk '{print substr($0,7,3)}'`
+if [ "${pTipo}" = "INCOMING" ]; then
+     vpValRet=`echo $COD_TIPOARCHMC_NGTA | awk '{print substr($0,1,3)}'`
+elif [ "${pTipo}" = "INCRET" ]; then
+     vpValRet=`echo $COD_TIPOARCHMC_NGTA | awk '{print substr($0,4,3)}'`
+elif [ "${pTipo}" = "INCMATCH" ]; then
+     vpValRet=`echo $COD_TIPOARCHMC_NGTA | awk '{print substr($0,7,3)}'`
+elif [ "${pTipo}" = "INCMAESTRONGTA" ]; then
+     vpValRet=`echo $COD_TIPOARCHMC_NGTA | awk '{print substr($0,10,3)}'`
+elif [ "${pTipo}" = "REPCREDMC" ]; then
+     vpValRet=`echo $COD_TIPOARCHMC_NGTA | awk '{print substr($0,13,3)}'`
+elif [ "${pTipo}" = "REPDEBMAESTRO" ]; then
+     vpValRet=`echo $COD_TIPOARCHMC_NGTA | awk '{print substr($0,16,3)}'`
+elif [ "${pTipo}" = "REPDEBMAESTROSW" ]; then
+     vpValRet=`echo $COD_TIPOARCHMC_NGTA | awk '{print substr($0,19,5)}'`
+fi
+
+}
 
 
 # f_menuOPC () | menu de opciones
@@ -303,11 +335,11 @@ f_menuOPC ()
    vpValRet_10=${vpValRet}
 
    echo "-------------------------------------------------------------------------------"
-   echo "  SELECCIONAR ENTRANTES                           "
-   echo " ----------------------------------------------    "
+   echo "SELECCIONAR DE ENTRANTES                           "
+   echo "-----------------------------------------    ----------------------------------"
 
-   echo " [ 1] CREAR INC MC Debito Maestro (TT${vpValRet_6})       "
-   #echo " [ 2] CREAR INC NGTA Debito Maestro (T${vpValRet_6}NA)       "
+   echo "[ 1] CREAR INC      Debito Maestro (TT${vpValRet_6})       "
+   echo "[ 2] CREAR INC NGTA Debito Maestro (T${vpValRet_6}NA)       "
    echo
    #echo "                                             CONSULTAS"
    #echo "                                             ----------------------------------"
@@ -323,11 +355,28 @@ f_menuOPC ()
 
 }
 
+
 ################################################################################
 ## INICIO | PROCEDIMIENTO PRINCIPAL
 ################################################################################
 
 echo
+
+
+## Entidad Adquirente
+################################################################################
+
+if [ "$pEntAdq" = "BM" ]; then
+   vEntidad="BANCO MERCANTIL"
+elif [ "$pEntAdq" = "BP" ]; then
+     vEntidad="BANCO PROVINCIAL"
+elif [ "$pEntAdq" = "TODOS" ]; then
+     vEntidad="GENERAL"
+else
+     f_msg "Codigo de Entidad Incorrecto [BM/BP/TODOS]"
+     f_msg
+     exit 1;
+fi
 
 
 ## Fecha de Proceso
@@ -406,41 +455,35 @@ while ( test -z "$vOpcion" || true ) do
    fi
 
 
-   # SELECCIÓN DE CONTENIDO DE LOS DATOS SI TRAERA O NO TRAERA FALLAS
+   # CONTRUCCIÓN DE ENTRANTES MAESTRO
    ###########################################################################################
    #  INICIO 
    ###########################################################################################
 
    if [ "$vOpcion" = "1" ]; then
 
-   if [ "$vOpcion" = "01" ]; then  # Incoming MARCA NAIGUATA
-            vFlgOpcErr="N"
-            vOpcion=""
-            trap "trap '' 2" 2
-            TsTQAMCppkg.sh $pMarca ${vFecProc} ${vFecSes} S   # S= Con fallas registros FREC Y NREC
-            echo "hola 101"
-            trap ""   
-   fi # Incoming MARCA NAIGUATA
+      vFlgOpcErr="N"
+      vOpcion=""
 
       # Verifica el Estado del Proceso en el Archivo de Control
       ## Procesos ORACLE
       ################################################################################
+      
 
-      f_fhmsg "Procesando Construccion de Incoming..."
-      #vRet=`ORAExec.sh "exec :rC:=PBUILDINCMC.F_MAIN (TO_DATE('${pFecProc}','YYYYMMDD'),'${pEntAdq}','MC');" $DB`
-      vRet=`ORAExec.sh "exec :rC:=PBUILDINCMC.F_MAIN ('${pFecSes}','${pEntAdq}','MC');" $DB`
+      f_fhmsg "Procesando Contrucción de Incoming..."
+      #vRet=`ORAExec.sh "exec :rC:=PBUILDINCMC.F_MAIN ('${pFecProc}','${pEntAdq}','MC');" $DB`
+      vRet=`ORAExec.sh "exec :rC:=PBUILDINCMC.F_MAIN ('${pFecSes}','${pEntAdq}','MC');" $DB` 
       f_vrfvalret "$?" "Error al ejecutar PBUILDINCMC.F_MAIN. Avisar a Soporte."
       vEst=`echo $vRet | awk '{print substr($0,1,1)}'`
       if [ "$vEst" = "0" ]; then
          vFileOUTMC=`echo "$vRet" | awk '{print substr($0,2,23)}'`
          f_fhmsg "Archivo Generado: ${vFileOUTMC}"
-         f_fhmsg "Busca en File_Out"
-         sleep 10  
+         read -p "Presione Enter para continuar" 
          #SGCOUTMCconv.sh ${vFileOUTMC}
          vFileOUTMC=`echo "$vRet" | awk '{print substr($0,25,23)}'`
          if [ "${vFileOUTMC}" != "" ]; then
             f_fhmsg "Archivo Generado: ${vFileOUTMC}"
-         #   SGCOUTMCconv.sh ${vFileOUTMC}
+            #SGCOUTMCconv.sh ${vFileOUTMC}
          fi
       elif [ "$vEst" = "W" ]; then
          vRet=`echo "$vRet" | awk '{print substr($0,2)}'`
