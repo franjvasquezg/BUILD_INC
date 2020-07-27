@@ -10,7 +10,7 @@ CREATE OR REPLACE PACKAGE SGCVNZ.PBUILDINCMC IS
  Francisco Vásquez.     06/Julio/2020     Correccion en variables de fecha (MC y NGTA)
  Francisco Vásquez.     08/Julio/2020     Ajustes en p_GenRegBodyIncBp para los registros del 470
  Francisco Vásquez.     20/Julio/2020     Nueva lineas SHDR, STRL, 
-
+ Francisco Vásquez.     27/Julio/2020     Funcionalidad para crear archivos 470 con registos NREC  
 ******************************************************************************************************/
 
 
@@ -187,10 +187,10 @@ TYPE Msg_1740 IS RECORD  -- Cobros pagos
       ImpTran            varchar2(12)    :='',
       MonTran            varchar2(3)     :='');
 
-FUNCTION f_main(psfecha VARCHAR2, ppfecha VARCHAR2, pcod_entadq VARCHAR2, Marca VARCHAR2) RETURN VARCHAR2;
+FUNCTION f_main(psfecha VARCHAR2, ppfecha VARCHAR2, pcod_entadq VARCHAR2, Marca VARCHAR2, bug CHAR) RETURN VARCHAR2;
 --FUNCTION f_main(psfecha VARCHAR2) RETURN VARCHAR2;
 
-PROCEDURE p_mainGen_entrante(pFecha CHAR,pFechaP CHAR,pfechaR CHAR,vtipoimc CHAR, pBankChar CHAR, pIdProc NUMBER, pDirOut CHAR,  pmarca NUMBER, pfile OUT VARCHAR);
+PROCEDURE p_mainGen_entrante(pFecha CHAR,pFechaP CHAR,pfechaR CHAR,vtipoimc CHAR, pBankChar CHAR, pIdProc NUMBER, pDirOut CHAR,  pmarca NUMBER, bug CHAR, pfile OUT VARCHAR);
 
 --Cabecera y Fin de Archivo provincial
 PROCEDURE p_GenRegHFp(vcodfuncion CHAR,vfecha VARCHAR2, vCReg VARCHAR2);
@@ -207,11 +207,16 @@ PROCEDURE p_GenRegHFm(vcodfuncion CHAR,vfecha VARCHAR2, vCReg VARCHAR2);
 --Cabecera y Fin de Archivo mercantil
 PROCEDURE p_GenRegfin(vcodfuncion CHAR);
 
---Cuerpo Banco Provincial
+--Cuerpo Banco Provincial y Banco Mercantil
 PROCEDURE p_GenRegBodyIncBp(pfecha VARCHAR2, vfecha varchar2, pbanco VARCHAR2, pmarca NUMBER);
 
---Cuerpo Banco Mercantil
 PROCEDURE p_GenRegBodyIncBm(pfecha VARCHAR2, vfecha varchar2, pbanco VARCHAR2, pmarca NUMBER);
+
+--Cuerpo Banco Provincial y Banco Mercantil con fallas 
+PROCEDURE p_GenRegBodyIncBp_bug(pfecha VARCHAR2, vfecha varchar2, pbanco VARCHAR2, pmarca NUMBER);
+
+PROCEDURE p_GenRegBodyIncBm_bug(pfecha VARCHAR2, vfecha varchar2, pbanco VARCHAR2, pmarca NUMBER);
+
 
 procedure p_FindPostalCode(pComercio varchar2, codePostal out varchar2, codEstado out varchar2);
 
@@ -302,7 +307,7 @@ CREATE OR REPLACE PACKAGE BODY SGCVNZ.PBUILDINCMC IS
 
 
 
-FUNCTION f_main(psfecha VARCHAR2, ppfecha VARCHAR2, pcod_entadq VARCHAR2, Marca VARCHAR2) RETURN VARCHAR2 IS
+FUNCTION f_main(psfecha VARCHAR2, ppfecha VARCHAR2, pcod_entadq VARCHAR2, Marca VARCHAR2, bug CHAR) RETURN VARCHAR2 IS
 
 
  vDirOUT          VARCHAR2(100)   :='DIR-OUT';
@@ -355,7 +360,7 @@ BEGIN
 
    
   -- Proceso para Banco Mercantil y Provincial
-  p_mainGen_entrante(psfecha,ppfecha,vFechacR,vtipoimc,pcod_entadq,vIDProc,vDirOUT,vMarca,vArchivo);
+  p_mainGen_entrante(psfecha,ppfecha,vFechacR,vtipoimc,pcod_entadq,vIDProc,vDirOUT,vMarca,bug,vArchivo);
   IF LENGTH(TRIM(vArchivo)) > 0 THEN
      vRetorno := vArchivo;
   END IF;
@@ -419,7 +424,7 @@ BEGIN
     RETURN ('Error en la ejecucion de la funcion PQOUTGOINGMC.TIPO_TERM_TRANS: '||SQLERRM);
 END;
 
-PROCEDURE p_mainGen_entrante(pFecha CHAR,pFechaP CHAR,pfechaR CHAR,vtipoimc CHAR, pBankChar CHAR, pIdProc NUMBER, pDirOut CHAR,  pmarca NUMBER, pfile OUT VARCHAR) IS
+PROCEDURE p_mainGen_entrante(pFecha CHAR,pFechaP CHAR,pfechaR CHAR,vtipoimc CHAR, pBankChar CHAR, pIdProc NUMBER, pDirOut CHAR,  pmarca NUMBER, bug CHAR, pfile OUT VARCHAR) IS
 
  vbank6   CHAR(6):= '';
  pfechad  date;
@@ -508,7 +513,11 @@ PROCEDURE p_mainGen_entrante(pFecha CHAR,pFechaP CHAR,pfechaR CHAR,vtipoimc CHAR
          pqmonproc.inslog(pIdProc, 'M', 'inicia Proceso de contrucción de entrante BM');
          p_genRegHFm('FHDR',pfechaR,vCReg);                
          p_genRegSHm('SHDR',pFecha,'358011');
-         p_GenRegBodyIncBm(pFecha,pfechaR,vbank4,'358011');
+         IF bug = 'S' THEN  
+            p_GenRegBodyIncBm_bug(pFecha,pfechaR,vbank4,'358011'); --las transacciones 1444 la construira como NREC
+         ELSIF bug = 'N' THEN
+            p_GenRegBodyIncBm(pFecha,pfechaR,vbank4,'358011');
+         END IF;
          p_genRegSHm('STRL',pFecha,'358011');
          p_genRegSHm('STRN',pFecha,'358011');
          p_genRegHFm('FTRL',pfechaR,vCReg); 
@@ -554,7 +563,11 @@ PROCEDURE p_mainGen_entrante(pFecha CHAR,pFechaP CHAR,pfechaR CHAR,vtipoimc CHAR
          pqmonproc.inslog(pIdProc, 'M', 'inicia Proceso de contrucción de entrante BM');
          p_genRegHFm('FHDR',pfechaR,vCReg);  --pFecha6
          p_genRegSHm('SHDR',pFecha,'359011');
-         p_GenRegBodyIncBm(pFecha,pfechaR,vbank4,'359011');  --pmarca
+         IF bug = 'S' THEN
+            p_GenRegBodyIncBm_bug(pFecha,pfechaR,vbank4,'359011');  --las transacciones 1444 la construira como NREC
+         ELSIF bug = 'N' THEN
+            p_GenRegBodyIncBm(pFecha,pfechaR,vbank4,'359011');  --pmarca
+         END IF;
          p_genRegSHm('STRL',pFecha,'359011');
          p_genRegSHm('STRN',pFecha,'358011');
          p_genRegHFm('FTRL',pfechaR,vCReg); --pFecha6
@@ -605,7 +618,11 @@ PROCEDURE p_mainGen_entrante(pFecha CHAR,pFechaP CHAR,pfechaR CHAR,vtipoimc CHAR
          pqmonproc.inslog(pIdProc, 'M', 'inicia Proceso de contrucción de entrante BP');
          p_genRegHFp('FHDR',pfechaR,vCReg);
          p_genRegSHp('SHDR',pFecha,'358012');
-         p_GenRegBodyIncBp(pFecha,pfechaR,vbank4,'358012');  --pmarca 
+         IF bug = 'S' THEN
+            p_GenRegBodyIncBp_bug(pFecha,pfechaR,vbank4,'358012');  --pmarca
+         ELSIF bug = 'N' THEN
+            p_GenRegBodyIncBp(pFecha,pfechaR,vbank4,'358012');  --pmarca
+         END IF; 
          p_genRegSHp('STRL',pFecha,'358012');
          p_genRegSHp('STRN',pFecha,'358012');
          p_genRegHFp('FTRL',pfechaR,vCReg);
@@ -652,7 +669,11 @@ PROCEDURE p_mainGen_entrante(pFecha CHAR,pFechaP CHAR,pfechaR CHAR,vtipoimc CHAR
 
          p_genRegHFp('FHDR',pfechaR,vCReg);
          p_genRegSHp('SHDR',pFecha,'359012');
-         p_GenRegBodyIncBp(pFecha,pfechaR,vbank4,'359012');  --pmarca
+         IF bug = 'S' THEN
+            p_GenRegBodyIncBp_bug(pFecha,pfechaR,vbank4,'359012');  --pmarca
+         ELSIF bug = 'N' THEN
+            p_GenRegBodyIncBp(pFecha,pfechaR,vbank4,'359012');
+         END IF;
          p_genRegSHp('STRL',pFecha,'359012');
          p_genRegSHp('STRN',pFecha,'358012');
          p_genRegHFp('FTRL',pfechaR,vCReg);
@@ -669,6 +690,142 @@ END;
 
 
 PROCEDURE p_GenRegBodyIncBp(pfecha VARCHAR2, vfecha varchar2, pbanco VARCHAR2, pmarca NUMBER) IS
+ strhexa1240C       VARCHAR2(32)   := '';
+ vcodpostal         VARCHAR2(10)   := '';
+ vcodestado         VARCHAR2(3)    := '';
+ long_p48           NUMBER         := 0;
+ vbanco             VARCHAR2(2)    := '';
+ vt1240C            msg_1240C;
+ mb                 Mapa_Bits;
+ vs                 s;
+ vlong              VARCHAR2(128);
+ vdato              VARCHAR2(1024);
+ ncero              NUMBER := 0;
+ pds0158_de48       VARCHAR2(20)    :='';
+ mb40               VARCHAR2(1)     :='';
+ vcodser            VARCHAR2(3)     :=NULL;
+ --vmarca             number(6) ;
+
+
+
+ CURSOR cr_reginc IS
+   SELECT 
+   cod_entadq, csb_entadq, cod_hrcierre, p00idmsg, 
+   p02numtar, p03codpro, p04imptra, p05impcon, p06imptit, p09concon,
+   p10concli, p11idetra, p12timloc, p14feccad, p16feccon, p17feccap,
+   p18lacti, p22punser, p24codfun, p25codraz, p26lacti, p28sesion,
+   p29inlote, p30impori, p31refadq, p32idadq, p33idpre, p37datref,
+   p38numaut, p39codacr, p41cseri, p42ideest, p46tcuot01,
+   p46tcuot02, p46tcuot03, p46tcuot04, p48tiptra, p48cuenta,
+   p48tipmov, p48filler, p49montra, p50moncon, p51montit,
+   p56do_idmsg, p56do_idetra, p56do_timloc, p56do_idadq, p58idaut,
+   p62melect, p71nummen, pxxfiller, tipo_insert, es_dataok,
+   tipo_auxfunc
+   FROM mcp_bp 
+   WHERE  cod_entadq = 'BP' --pbanco
+   AND p28sesion = pfecha   --TO_CHAR(dFecha-1,'YYYYMMDD')
+   AND p48tiptra LIKE '10%'
+   AND P58IDAUT = pmarca;    -- AND p71nummen LIKE pmarca||'%';
+
+ BEGIN
+
+   --inicia Generacion de Compra
+   vPaso   := 'Paso 03';
+
+   FOR c IN cr_reginc LOOP
+
+          long_p48:=0;
+          vt1240C     := f_ini_msg1240C;
+          if c.P00IDMSG = '1244' then
+            vt1240C.MesTypeInd      :='FREC';                -- FREC=00 
+          elsif c.P00IDMSG = '1444' then
+            vt1240C.MesTypeInd      :='EREC';                -- EREC
+          end if; 
+          vt1240C.SwSerialNum       := '000000000';          --Switch Serial Number
+          vt1240C.ProAcqIssuer      := 'A';
+          vt1240C.ProcessorID       := '0000';
+          vt1240C.TransactionDate   := vfecha;
+          vt1240C.TransactionTime   := SUBSTR(c.p12timloc,9,6);
+          vt1240C.PANLength         := length(c.p02numtar);
+          vt1240C.PAN               := rpad(c.p02numtar,19,' '); --lpad(c.p02numtar,19,' ');
+          vt1240C.ProcessingCode    := '000000';
+          vt1240C.TraceNumber       :=  lpad(c.p11idetra,6,'0');
+          vt1240C.MerchantType      :=  '0000';
+          vt1240C.POSEntry          :=  '000';
+          vt1240C.ReferenceNumber   := '000000000000';
+          vt1240C.AcqInstitutionID  := '1993731318';        -- Banco Provincial  '1993731318'  
+          vt1240C.TerminalID        := '0000000000';
+          if c.P00IDMSG = 1244 then
+            vt1240C.ResponseCode    := '00';                -- FREC=00 
+          elsif c.P00IDMSG = 1444 then
+             vt1240C.ResponseCode   := '05';                -- NREC=05
+          end if; 
+          vt1240C.Brand             := 'MS2';                -- MS1 ¿INTERNACIONA?
+          vt1240C.AdviceReasonCode  := '       ';            --From online 0220/0420 messages. Contains blanks when the transaction completes as requested.
+          vt1240C.IntAgreCode       := 'C'||c.p49montra;     -- Si está presente, representa la moneda en la cual se liquidará la transacción.
+          vt1240C.AuthorizationID   := '      ';              --Identificación de la Autorización , En blanco si no está disponible
+          vt1240C.CurCodeTrans      := c.p49montra;          -- Código de Moneda–– Transacción
+          vt1240C.ImpliedDecTrans   := '2';                   -- Decimal Implícito–– Transacción
+          vt1240C.ComAmtTransLocal  := lpad(c.p04imptra,12,'0');          -- Transacción de Monto Completada—Local
+          vt1240C.ComAmoTransLocalI := UPPER(c.p48tipmov);   --Transacción de Monto Final––Indicador Local DR/CR
+          vt1240C.CasBacAmtLocal    := '000000000000';        -- 
+          vt1240C.CasBacAmoLocalI   := UPPER(c.p48tipmov);    -- 
+          vt1240C.AccessFeeLocal    := '00000000';             -- 
+          vt1240C.AccFeeLocalInd    := UPPER(c.p48tipmov);     -- 
+          vt1240C.CurCodeSett       := c.p49montra;            -- 
+          vt1240C.ImpDecSett        := '2';                     --  Implied decimal of DE 50, Currency Code—Settlement
+          vt1240C.ConvRatSett       := '11000000';              -- Conversion Rate— Settlement
+          vt1240C.CompAmtSett       := lpad(c.P04IMPTRA,12,'0');                -- Completed amount (DE 5)represented in settlement currency (DE 50).
+          vt1240C.CompAmoSettInd    := UPPER(SUBSTR(c.P46TCUOT01,3,1));           -- Indicates whether the value is a credit or debit to the receiver. Valid  
+          vt1240C.InterchangeFee    := LPAD(NVL(lpad(SUBSTR(C.P46TCUOT01,4,8),10,'0'),0),10,'0');     -- Batch generated—same currency as DE 50
+          vt1240C.InterchangeFeeI   := UPPER(c.p48tipmov);     -- 
+          vt1240C.ServLevelInd      :='000';     -- 
+          vt1240C.ResponseCode2     :='  ';     -- 
+          vt1240C.Filler            :='  ';                    --Spaces 
+          vt1240C.RepAmoLocal       :='       4NNX ';     -- Monto de Reemplazo—Local
+          vt1240C.RepAmoLocalInd    :=' ';     -- 
+          vt1240C.RepAmtSett        := lpad(c.P04IMPTRA,12,'0');     -- 
+          vt1240C.RepAmoSettInd     := UPPER(c.p48tipmov);     -- 
+          vt1240C.OriSettDate       := vfecha;     -- Fecha de Liquidación ORIGINAL
+          vt1240C.PosIDInd          :=' ';     -- Indicador de Identificación Positiva
+          vt1240C.ATMSurFProID      :=' ';     -- 
+          vt1240C.CroBorInd         :=' ';     -- 
+          vt1240C.CroBorCurInd      :=' ';     -- 
+          vt1240C.ISAFeeInd         :=' ';     -- 
+          vt1240C.TracNumATrans     :='000000';     -- 
+          vt1240C.Filler2           :=' ';    --
+
+          --vMontoTotal   :=vMontoTotal + to_number(nvl(vt1240C.imptra_p04_actc,0));
+          --vtotalMensaje :=vtotalMensaje + 1;
+
+
+          vCad1240:= vt1240C.MesTypeInd || vt1240C.SwSerialNum      || vt1240C.ProAcqIssuer      ||
+                     vt1240C.ProcessorID || vt1240C.TransactionDate  || vt1240C.TransactionTime  ||
+                     vt1240C.PANLength || vt1240C.PAN  || vt1240C.ProcessingCode  || vt1240C.TraceNumber ||
+                     vt1240C.MerchantType || vt1240C.POSEntry  || vt1240C.ReferenceNumber  || vt1240C.AcqInstitutionID  ||
+                     vt1240C.TerminalID  || vt1240C.ResponseCode || vt1240C.Brand  || vt1240C.AdviceReasonCode ||
+                     vt1240C.IntAgreCode     || vt1240C.AuthorizationID || vt1240C.CurCodeTrans      ||
+                     vt1240C.ImpliedDecTrans || vt1240C.ComAmtTransLocal || vt1240C.ComAmoTransLocalI  ||
+                     vt1240C.CasBacAmtLocal || vt1240C.CasBacAmoLocalI || vt1240C.AccessFeeLocal ||
+                     vt1240C.AccFeeLocalInd || vt1240C.CurCodeSett || vt1240C.ImpDecSett      ||
+                     vt1240C.ConvRatSett || vt1240C.CompAmtSett  || vt1240C.CompAmoSettInd  ||
+                     vt1240C.InterchangeFee || vt1240C.InterchangeFeeI || vt1240C.ServLevelInd ||
+                     vt1240C.ResponseCode2 || vt1240C.Filler || vt1240C.RepAmoLocal  ||
+                     vt1240C.RepAmoLocalInd  || vt1240C.RepAmtSett  || vt1240C.RepAmoSettInd   ||
+                     vt1240C.OriSettDate || vt1240C.PosIDInd  || vt1240C.ATMSurFProID  ||
+                     vt1240C.CroBorInd || vt1240C.CroBorCurInd  || vt1240C.ISAFeeInd  ||
+                     vt1240C.TracNumATrans || vt1240C.Filler2 ;
+
+          utl_file.put_raw(vidfile, utl_raw.cast_to_raw(vCad1240),true);
+          utl_file.new_line(vidfile);
+          utl_file.fflush(vidfile);
+
+          -- Inicio: Calculos para Registro de Conciliacion (1240)
+          vMtoTot_1240.TotalMensaje  := vMtoTot_1240.TotalMensaje + 1;
+    END LOOP;
+END;
+
+PROCEDURE p_GenRegBodyIncBp_bug(pfecha VARCHAR2, vfecha varchar2, pbanco VARCHAR2, pmarca NUMBER) IS
  strhexa1240C       VARCHAR2(32)   := '';
  vcodpostal         VARCHAR2(10)   := '';
  vcodestado         VARCHAR2(3)    := '';
@@ -805,6 +962,137 @@ PROCEDURE p_GenRegBodyIncBp(pfecha VARCHAR2, vfecha varchar2, pbanco VARCHAR2, p
 END;
 
 PROCEDURE p_GenRegBodyIncBm(pfecha VARCHAR2, vfecha varchar2, pbanco VARCHAR2, pmarca NUMBER) IS
+ strhexa1240C       VARCHAR2(32)   := '';
+ vcodpostal         VARCHAR2(10)   := '';
+ vcodestado         VARCHAR2(3)    := '';
+ long_p48           NUMBER         := 0;
+ vbanco             VARCHAR2(2)    := '';
+ vt1240C            msg_1240C;
+ mb                 Mapa_Bits;
+ vs                 s;
+ vlong              VARCHAR2(128);
+ vdato              VARCHAR2(1024);
+ ncero              NUMBER := 0;
+ pds0158_de48       VARCHAR2(20)    :='';
+ mb40               VARCHAR2(1)     :='';
+ vcodser            VARCHAR2(3)     :=NULL;
+
+
+
+ CURSOR cr_reginc IS
+   SELECT 
+   cod_entadq, csb_entadq, cod_hrcierre, p00idmsg, 
+   p02numtar, p03codpro, p04imptra, p05impcon, p06imptit, p09concon,
+   p10concli, p11idetra, p12timloc, p14feccad, p16feccon, p17feccap,
+   p18lacti, p22punser, p24codfun, p25codraz, p26lacti, p28sesion,
+   p29inlote, p30impori, p31refadq, p32idadq, p33idpre, p37datref,
+   p38numaut, p39codacr, p41cseri, p42ideest, p46tcuot01,
+   p46tcuot02, p46tcuot03, p46tcuot04, p48tiptra, p48cuenta,
+   p48tipmov, p48filler, p49montra, p50moncon, p51montit,
+   p56do_idmsg, p56do_idetra, p56do_timloc, p56do_idadq, p58idaut,
+   p62melect, p71nummen, pxxfiller, tipo_insert, es_dataok,
+   tipo_auxfunc
+   FROM mcp_bm 
+   WHERE  cod_entadq = 'BM'
+   AND p28sesion = pfecha   --TO_CHAR(dFecha-1,'YYYYMMDD')
+   AND p48tiptra LIKE '10%'
+   AND P58IDAUT = pmarca;  -- AND p71nummen LIKE pmarca||'%';
+
+ BEGIN
+
+   --inicia Generacion de Compra
+   vPaso   := 'Paso 03';
+
+   FOR c IN cr_reginc LOOP
+
+          long_p48:=0;
+          vt1240C     := f_ini_msg1240C;
+          if c.P00IDMSG = '1244' then
+            vt1240C.MesTypeInd      :='FREC';                        -- FREC=00 
+          elsif c.P00IDMSG = '1444' then
+            vt1240C.MesTypeInd      :='EREC';                        -- EREC=05
+          end if; 
+          vt1240C.SwSerialNum       := '000000000';                  --Switch Serial Number
+          vt1240C.ProAcqIssuer      := 'A';
+          vt1240C.ProcessorID       := '0000';
+          vt1240C.TransactionDate   := vfecha;
+          vt1240C.TransactionTime   := SUBSTR(c.p12timloc,9,6);
+          vt1240C.PANLength         := length(c.p02numtar);
+          vt1240C.PAN               := rpad(c.p02numtar,19,' '); 
+          vt1240C.ProcessingCode    := '000000';
+          vt1240C.TraceNumber       :=  lpad(c.p11idetra,6,'0');   
+          vt1240C.MerchantType      :=  '0000';
+          vt1240C.POSEntry          :=  '000';
+          vt1240C.ReferenceNumber   := '000000000000';
+          vt1240C.AcqInstitutionID  := '1986227512';                 -- Banco Mercantil  '1986227512'  
+          vt1240C.TerminalID        := '0000000000';
+          if c.P00IDMSG = 1244 then
+            vt1240C.ResponseCode    := '00';                         -- FREC=00 
+          elsif c.P00IDMSG = 1444 then
+             vt1240C.ResponseCode   := '05';                         -- NREC=05
+          end if; 
+          vt1240C.Brand             := 'MS2';                        -- MS1 ¿INTERNACIONA?
+          vt1240C.AdviceReasonCode  := '       ';                    --From online 0220/0420 messages. Contains blanks when the transaction completes as requested.
+          vt1240C.IntAgreCode       := 'C'||c.p49montra;             -- Si está presente, representa la moneda en la cual se liquidará la transacción.
+          vt1240C.AuthorizationID   := '      ';                     --Identificación de la Autorización , En blanco si no está disponible
+          vt1240C.CurCodeTrans      := c.p49montra;                  -- Código de Moneda–– Transacción
+          vt1240C.ImpliedDecTrans   := '2';                          -- Decimal Implícito–– Transacción
+          vt1240C.ComAmtTransLocal  := lpad(c.p04imptra,12,'0');     -- Transacción de Monto Completada—Local
+          vt1240C.ComAmoTransLocalI := UPPER(c.p48tipmov);           --Transacción de Monto Final––Indicador Local DR/CR
+          vt1240C.CasBacAmtLocal    := '000000000000';               -- 
+          vt1240C.CasBacAmoLocalI   := UPPER(c.p48tipmov);           -- 
+          vt1240C.AccessFeeLocal    := '00000000';                   -- 
+          vt1240C.AccFeeLocalInd    := UPPER(c.p48tipmov);           -- 
+          vt1240C.CurCodeSett       := c.p49montra;                  -- 
+          vt1240C.ImpDecSett        := '2';                          --  Implied decimal of DE 50, Currency Code—Settlement
+          vt1240C.ConvRatSett       := '11000000';                   -- Conversion Rate— Settlement
+          vt1240C.CompAmtSett       := lpad(c.P04IMPTRA,12,'0');                -- Completed amount (DE 5)represented in settlement currency (DE 50).
+          vt1240C.CompAmoSettInd    := UPPER(SUBSTR(c.p46tcuot01,3,1));         -- Indicates whether the value is a credit or debit to the receiver. Valid  
+          vt1240C.InterchangeFee    := lpad(SUBSTR(c.p46tcuot01,4,8),10,'0');   -- Batch generated—same currency as DE 50
+          vt1240C.InterchangeFeeI   := UPPER(c.p48tipmov);                      -- 
+          vt1240C.ServLevelInd      :='000';                                    -- 
+          vt1240C.ResponseCode2     :='  ';                                     -- 
+          vt1240C.Filler            :='  ';                                     --Spaces 
+          vt1240C.RepAmoLocal       :='       4NNX ';                           -- Monto de Reemplazo—Local
+          vt1240C.RepAmoLocalInd    :=' ';     -- 
+          vt1240C.RepAmtSett        := lpad(c.P04IMPTRA,12,'0');                -- 
+          vt1240C.RepAmoSettInd     := UPPER(c.p48tipmov);                      -- 
+          vt1240C.OriSettDate       := vfecha;                                  -- Fecha de Liquidación ORIGINAL
+          vt1240C.PosIDInd          :=' ';                                      -- Indicador de Identificación Positiva
+          vt1240C.ATMSurFProID      :=' ';                                      -- 
+          vt1240C.CroBorInd         :=' ';                                      -- 
+          vt1240C.CroBorCurInd      :=' ';                                      -- 
+          vt1240C.ISAFeeInd         :=' ';                                      -- 
+          vt1240C.TracNumATrans     :='000000';                                 -- 
+          vt1240C.Filler2           :=' ';                                      --
+
+        vCad1240:= vt1240C.MesTypeInd || vt1240C.SwSerialNum      || vt1240C.ProAcqIssuer      ||
+                 vt1240C.ProcessorID || vt1240C.TransactionDate  || vt1240C.TransactionTime  ||
+                 vt1240C.PANLength || vt1240C.PAN  || vt1240C.ProcessingCode  || vt1240C.TraceNumber ||
+                 vt1240C.MerchantType || vt1240C.POSEntry  || vt1240C.ReferenceNumber  || vt1240C.AcqInstitutionID  ||
+                 vt1240C.TerminalID  || vt1240C.ResponseCode || vt1240C.Brand  || vt1240C.AdviceReasonCode ||
+                 vt1240C.IntAgreCode     || vt1240C.AuthorizationID || vt1240C.CurCodeTrans      ||
+                 vt1240C.ImpliedDecTrans || vt1240C.ComAmtTransLocal || vt1240C.ComAmoTransLocalI  ||
+                 vt1240C.CasBacAmtLocal || vt1240C.CasBacAmoLocalI || vt1240C.AccessFeeLocal ||
+                 vt1240C.AccFeeLocalInd || vt1240C.CurCodeSett || vt1240C.ImpDecSett      ||
+                 vt1240C.ConvRatSett || vt1240C.CompAmtSett  || vt1240C.CompAmoSettInd  ||
+                 vt1240C.InterchangeFee || vt1240C.InterchangeFeeI || vt1240C.ServLevelInd ||
+                 vt1240C.ResponseCode2 || vt1240C.Filler || vt1240C.RepAmoLocal  ||
+                 vt1240C.RepAmoLocalInd  || vt1240C.RepAmtSett  || vt1240C.RepAmoSettInd   ||
+                 vt1240C.OriSettDate || vt1240C.PosIDInd  || vt1240C.ATMSurFProID  ||
+                 vt1240C.CroBorInd || vt1240C.CroBorCurInd  || vt1240C.ISAFeeInd  ||
+                 vt1240C.TracNumATrans || vt1240C.Filler2 ;
+
+          utl_file.put_raw(vidfile, utl_raw.cast_to_raw(vCad1240),true);
+          utl_file.new_line(vidfile);
+          utl_file.fflush(vidfile);
+
+          -- Inicio: Calculos para Registro de Conciliacion (1240)
+          vMtoTot_1240.TotalMensaje  := vMtoTot_1240.TotalMensaje + 1;
+    END LOOP;
+END;
+
+PROCEDURE p_GenRegBodyIncBm_bug(pfecha VARCHAR2, vfecha varchar2, pbanco VARCHAR2, pmarca NUMBER) IS
  strhexa1240C       VARCHAR2(32)   := '';
  vcodpostal         VARCHAR2(10)   := '';
  vcodestado         VARCHAR2(3)    := '';
