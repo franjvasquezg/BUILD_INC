@@ -291,10 +291,11 @@ f_menuOPC ()
          else
             echo "prueba reporte ultima opción" 
          fi
-         echo "                                                                               " 
-         echo "-------------------------------------------------------------------------------"
-         echo "  CONDICION DATOS DEL ENTRANTE     "
-         echo "      OK [00]   FALLAS [01] " 
+         echo "                                                                               "
+         echo "                                                                               "
+         echo "  SELECCIONE CONDICION DATOS DEL ENTRANTE                                      "
+         echo " ----------------------------------------------                                "
+         echo "     OK [00]   CON FALLAS [01] " 
          echo "                                                                               " 
          echo "                                                                               " 
          echo "-------------------------------------------------------------------------------"
@@ -385,7 +386,7 @@ while ( test -z "$vOpcion" || true ) do
             vFlgOpcErr="N"
             vOpcion=""
             trap "trap '' 2" 2
-            #TsTQAMCppkg.sh MC ${vFecProc} ${vFecSes} N   # N= sin fallas registros FREC Y EREC
+            TsTQAMCppkg.sh MC ${vFecProc} ${vFecSes} N   # N= sin fallas registros FREC Y EREC
             echo "hola 100"
             trap ""
    fi # Incoming MARCA MASTER CARD
@@ -394,7 +395,7 @@ while ( test -z "$vOpcion" || true ) do
             vFlgOpcErr="N"
             vOpcion=""
             trap "trap '' 2" 2
-            #TsTQAMCppkg.sh NG ${vFecProc} ${vFecSes} S   # S= Con fallas registros FREC Y NREC
+            TsTQAMCppkg.sh NG ${vFecProc} ${vFecSes} S   # S= Con fallas registros FREC Y NREC
             echo "hola 101"
             trap ""   
    fi # Incoming MARCA NAIGUATA
