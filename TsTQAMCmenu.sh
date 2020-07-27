@@ -386,7 +386,7 @@ while ( test -z "$vOpcion" || true ) do
             vFlgOpcErr="N"
             vOpcion=""
             trap "trap '' 2" 2
-            TsTQAMCppkg.sh MC ${vFecProc} ${vFecSes} N   # N= sin fallas registros FREC Y EREC
+            TsTQAMCppkg.sh $pMarca ${vFecProc} ${vFecSes} N   # N= sin fallas registros FREC Y EREC
             echo "hola 100"
             trap ""
    fi # Incoming MARCA MASTER CARD
@@ -395,7 +395,7 @@ while ( test -z "$vOpcion" || true ) do
             vFlgOpcErr="N"
             vOpcion=""
             trap "trap '' 2" 2
-            TsTQAMCppkg.sh NG ${vFecProc} ${vFecSes} S   # S= Con fallas registros FREC Y NREC
+            TsTQAMCppkg.sh $pMarca ${vFecProc} ${vFecSes} S   # S= Con fallas registros FREC Y NREC
             echo "hola 101"
             trap ""   
    fi # Incoming MARCA NAIGUATA

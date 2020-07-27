@@ -297,42 +297,6 @@ vpFileLOG="${DIRLOG}/${vFileID}.LOG"
 
 echo > ${vpFileLOG}
 
-## Informe de Archivos a utilizar
-################################################################################
-
-f_msg
-f_fechora ${pFecProc}
-f_msg "           Fecha de Proceso : ${vpValRet}"
-f_msg "         Entidad Adquirente : ${vEntidad} (${pEntAdq})"
-f_msg "           Archivo de Datos : `basename ${vFileDAT}`"
-f_msg "                 Directorio : `dirname ${vFileDAT}`"
-f_msg "         Archivo de Control : `basename ${vFileCTL}`"
-f_msg "                 Directorio : `dirname ${vFileCTL}`"
-f_msg "    Archivo LOG del Proceso : `basename ${vpFileLOG}`"
-f_msg "                 Directorio : `dirname ${vpFileLOG}`"
-f_msg "       Archivo LOG de Carga : `basename ${vFileCAR}`"
-f_msg "                 Directorio : `dirname ${vFileCAR}`"
-f_msg "         Archivo de Errores : `basename ${vFileBAD}`"
-f_msg "                 Directorio : `dirname ${vFileBAD}`"
-f_msg "       Archivo de Descartes : `basename ${vFileDSC}`"
-f_msg "                 Directorio : `dirname ${vFileDSC}`"
-f_msg
-
-# Verifica la Existencia del Archivo de Datos y Archivo de Control
-################################################################################
-
-f_fhmsg "Verificando Existencia de Archivos"
-if ! [ -f "${vFileDAT}" ]; then
-   vNomFile=`basename ${vFileDAT}`
-   oraexec "exec PQPMAESTRO.p_NoExisteArchivo('${pEntAdq}',TO_DATE('${pFecProc}','YYYYMMDD'),'${vNomFile}','PCCLMA_NGTA');" $DB
-   f_finerr "ERROR: Archivo de datos <${vNomFile}> no encontrado."
-fi
-if ! [ -f "${vFileCTL}" ]; then
-   vNomFile=`basename ${vFileCTL}`
-   oraexec "exec PQPMAESTRO.p_NoExisteArchivo('${pEntAdq}',TO_DATE('${pFecProc}','YYYYMMDD'),'${vNomFile}','PCCLMA_NGTA');" $DB
-   f_finerr "ERROR: Archivo de control <${vNomFile}> no encontrado."
-fi
-
 
 ## Fecha de Proceso
 ################################################################################
@@ -423,7 +387,7 @@ while ( test -z "$vOpcion" || true ) do
          ################################################################################
          f_fhmsg "Procesando Construccion de Incoming..."
          f_fhmsg "Master Card Mercantil..."
-         vRet=`ORAExec.sh "exec :rC:=PBUILDINCMC.F_MAIN ('${pFecSes}','${pFecProc}','BM','MC','$ActBug');" $DB`
+         vRet=`ORAExec.sh "exec :rC:=PBUILDINCMC_B.F_MAIN ('${pFecSes}','${pFecProc}','BM','MC','$ActBug');" $DB`
          f_vrfvalret "$?" "Error al ejecutar PBUILDINCMC.F_MAIN. Avisar a Soporte."
          vEst=`echo $vRet | awk '{print substr($0,1,1)}'`
          if [ "$vEst" = "0" ]; then
@@ -493,7 +457,7 @@ while ( test -z "$vOpcion" || true ) do
          ################################################################################
          f_fhmsg "Procesando Construccion de Incoming..."
          f_fhmsg "Master Card PROVINCIAL..."
-         vRet=`ORAExec.sh "exec :rC:=PBUILDINCMC.F_MAIN ('${pFecSes}','${pFecProc}','BP','MC','$ActBug');" $DB`
+         vRet=`ORAExec.sh "exec :rC:=PBUILDINCMC_B.F_MAIN ('${pFecSes}','${pFecProc}','BP','MC','$ActBug');" $DB`
          f_vrfvalret "$?" "Error al ejecutar PBUILDINCMC.F_MAIN. Avisar a Soporte."
          vEst=`echo $vRet | awk '{print substr($0,1,1)}'`
          if [ "$vEst" = "0" ]; then
