@@ -281,10 +281,6 @@ f_menuDAT ()
 f_menuOPC ()
 {
 
-   #f_getCTAMC BINESD
-   #vpValRet_1=${vpValRet}
-   #f_getCTAMC TC
-   #vpValRet_2=${vpValRet}
    f_getCTAMC INCOMING
    vpValRet_3=${vpValRet}
    f_getCTAMC INCRET
@@ -293,8 +289,6 @@ f_menuOPC ()
    vpValRet_5=${vpValRet}
    f_getCTAMC INCMAESTRONGTA
    vpValRet_6=${vpValRet}
-   #f_getCTAMC BINESE
-   #vpValRet_7=${vpValRet}
    f_getCTAMC REPCREDMC
    vpValRet_8=${vpValRet}
    f_getCTAMC REPDEBMAESTRO
@@ -307,15 +301,7 @@ f_menuOPC ()
    echo " ----------------------------------------------    "
 
    echo " [ 1] CREAR INC MC Debito Maestro (TT${vpValRet_6})       "
-   #echo " [ 2] CREAR INC NGTA Debito Maestro (T${vpValRet_6}NA)       "
    echo
-   #echo "                                             CONSULTAS"
-   #echo "                                             ----------------------------------"
-   #echo "                                             [ 7] Log de Procesos"
-   #echo ""
-   #echo "                                             REPROCESO"
-   #echo "                                             ----------------------------------"
-   #echo "                                             [ 8] Reproceso"
    echo
    echo "-------------------------------------------------------------------------------"
    echo " Ver $dpVer | Telefonica Servicios Transaccionales                  [Q] Salir"
@@ -374,9 +360,6 @@ vOpcRepro="N"
 
 while ( test -z "$vOpcion" || true ) do
 
-   #vFileBINESD="SGCPINCMC${pEntAdq}.BINESD.${vFecProc}"
-   #vFileBINESE="SGCPINCMC${pEntAdq}.BINESE.${vFecProc}"
-   #vFileTC="SGCPINCMC${pEntAdq}.TC.${vFecProc}"
    vFileINCOMING="SGCPINCMC${pEntAdq}.INCOMINGMC.${vFecProc}"
    vFileINCRET="SGCPINCMC${pEntAdq}.INCRET.${vFecProc}"
    vFileINCMATCH="SGCPINCMC${pEntAdq}.INCMATCH.${vFecProc}"
