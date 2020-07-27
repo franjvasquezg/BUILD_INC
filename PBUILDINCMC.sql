@@ -9,7 +9,7 @@ CREATE OR REPLACE PACKAGE SGCVNZ.PBUILDINCMC IS
  Francisco Vásquez.     01/Julio/2020     Inicio de Constructor de Entrantes Maestro (MC y NGTA)
  Francisco Vásquez.     06/Julio/2020     Correccion en variables de fecha (MC y NGTA)
  Francisco Vásquez.     08/Julio/2020     Ajustes en p_GenRegBodyIncBp para los registros del 470
- Francisco Vásquez.     20/Julio/2020     Nueva lineas SHDR, STRL,
+ Francisco Vásquez.     20/Julio/2020     Nueva lineas SHDR, STRL, 
 
 ******************************************************************************************************/
 
